@@ -10,7 +10,10 @@ from io import BytesIO
 from datetime import datetime, timedelta
 from fpdf import FPDF
 
-# --- КОНФІГУРАЦІЯ ---
+# --- КОНФІГУРАЦІЯ ТА ШРИФТ ---
+FONT_PATH = "dejavu-sans.book.ttf"
+BG_IMAGE = "background.webp"
+
 PROGRAMS = {
     "1": "6-ти годинний тренінг з першої допомоги",
     "2": "12-ти годинний тренінг з першої допомоги",
@@ -20,78 +23,102 @@ PROGRAMS = {
 
 st.set_page_config(page_title="Verify Center", layout="wide")
 
-# --- ФУНКЦІЇ БЕЗПЕКИ ТА ДИЗАЙНУ ---
-def sanitize_input(user_input):
-    return re.sub(r'[^a-zA-Z0-9а-яА-ЯіїєІЇЄ]', '', user_input)
-
-def check_rate_limit():
-    if "request_count" not in st.session_state:
-        st.session_state.request_count = []
-    curr = time.time()
-    st.session_state.request_count = [t for t in st.session_state.request_count if curr - t < 60]
-    if len(st.session_state.request_count) >= 10: # Збільшено до 10 для зручності
-        return False
-    st.session_state.request_count.append(curr)
-    return True
-
-def get_qr_base64(url):
-    """Генерує QR-код у форматі base64 для відображення в HTML"""
-    qr = qrcode.QRCode(version=1, box_size=10, border=2)
-    qr.add_data(url)
-    qr.make(fit=True)
-    img = qr.make_image(fill_color="black", back_color="white")
-    buffered = BytesIO()
-    img.save(buffered, format="PNG")
-    return base64.b64encode(buffered.getvalue()).decode()
-
-def apply_custom_design(webp_file):
+# --- СТИЛІ ТА СКЛЯНИЙ ДИЗАЙН ---
+def apply_glass_design(webp_file):
+    bin_str = ""
     if os.path.exists(webp_file):
         with open(webp_file, "rb") as f:
-            encoded_string = base64.b64encode(f.read()).decode()
-        st.markdown(f"""
-        <style>
-        [data-testid="stAppViewContainer"] {{
-            background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 500px), 
-                        url("data:image/webp;base64,{encoded_string}");
-            background-size: 100% 500px, cover;
-            background-attachment: fixed;
-            background-repeat: no-repeat;
-        }}
-        .main-title {{ font-size: 48px; font-weight: 800; color: #1a1a1a; text-align: center; }}
-        .sub-title {{ font-size: 18px; color: #1a1a1a; text-align: center; margin-bottom: 30px; opacity: 0.8; }}
-        .result-card {{ background: white; border-radius: 30px; border: 1px solid #e0e0e0; padding: 35px; box-shadow: 0 15px 40px rgba(0,0,0,0.08); }}
-        .label {{ color: #888; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }}
-        .value {{ color: #1a1a1a; font-size: 18px; font-weight: 600; margin-bottom: 15px; }}
-        .qr-container {{ text-align: center; border: 1px solid #eee; padding: 10px; border-radius: 15px; background: #fafafa; }}
-        .qr-hint {{ font-size: 10px; color: #888; margin-top: 5px; font-weight: 700; }}
-        .active-color {{ color: #2ecc71; font-weight: 800; }}
-        .warning-color {{ color: #f1c40f; font-weight: 800; }}
-        .expired-color {{ color: #e74c3c; font-weight: 800; }}
-        </style>
-        """, unsafe_allow_html=True)
+            bin_str = base64.b64encode(f.read()).decode()
+            
+    st.markdown(f"""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap');
+    
+    [data-testid="stAppViewContainer"] {{
+        background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 500px), 
+                    url("data:image/webp;base64,{bin_str}");
+        background-size: 100% 500px, cover;
+        background-attachment: fixed;
+        font-family: 'Inter', sans-serif;
+    }}
 
-# --- ГЕНЕРАЦІЯ PDF ---
+    .main-title {{ font-size: 52px; font-weight: 800; color: #1a1a1a; text-align: center; margin-top: 40px; }}
+    .sub-title {{ font-size: 18px; color: #444; text-align: center; margin-bottom: 40px; opacity: 0.7; }}
+
+    /* СКЛЯНЕ ПОЛЕ ВВЕДЕННЯ (Glassmorphism) */
+    .stTextInput > div > div > input {{
+        background: rgba(255, 255, 255, 0.4) !important;
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        border-radius: 16px !important;
+        color: #1a1a1a !important;
+        font-size: 22px !important;
+        padding: 20px !important;
+        text-align: center !important;
+        transition: all 0.3s ease-in-out !important;
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05) !important;
+    }}
+    .stTextInput > div > div > input:focus {{
+        background: rgba(255, 255, 255, 0.6) !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+        transform: scale(1.02);
+    }}
+
+    /* СКЛЯНА КНОПКА З АНІМАЦІЄЮ */
+    div.stButton > button {{
+        background: rgba(26, 26, 26, 0.8) !important;
+        backdrop-filter: blur(5px);
+        color: white !important;
+        border: 1px solid rgba(255,255,255,0.1) !important;
+        border-radius: 50px !important;
+        padding: 12px 60px !important;
+        font-weight: 700 !important;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+        width: auto !important;
+        display: block; margin: 0 auto;
+    }}
+    div.stButton > button:hover {{
+        background: rgba(0, 0, 0, 1) !important;
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.2) !important;
+    }}
+
+    /* КАРТКА РЕЗУЛЬТАТУ З АНІМАЦІЄЮ ПОЯВИ */
+    .result-card {{
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 30px;
+        padding: 40px;
+        border: 1px solid #eee;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+        animation: fadeIn 0.8s ease-out;
+    }}
+
+    @keyframes fadeIn {{
+        from {{ opacity: 0; transform: translateY(20px); }}
+        to {{ opacity: 1; transform: translateY(0); }}
+    }}
+    
+    .label-text {{ color: #888; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }}
+    .value-text {{ color: #1a1a1a; font-size: 19px; font-weight: 600; margin-bottom: 20px; }}
+    </style>
+    """, unsafe_allow_html=True)
+
 def generate_pdf(row, expiry_date, program_name, verify_url):
     pdf = FPDF()
     pdf.add_page()
-    font_file = "dejavu-sans.book.ttf"
-    if os.path.exists(font_file):
-        pdf.add_font("DejaVu", "", font_file, uni=True)
+    if os.path.exists(FONT_PATH):
+        pdf.add_font("DejaVu", "", FONT_PATH)
         pdf.set_font("DejaVu", size=12)
-        f_n = "DejaVu"
+        f_name = "DejaVu"
     else:
         pdf.set_font("Arial", size=12)
-        f_n = "Arial"
+        f_name = "Arial"
 
-    pdf.set_font(f_n, size=22)
+    pdf.set_font(f_name, size=24)
     pdf.cell(190, 20, "Підтвердження", ln=True, align='C')
-    pdf.set_font(f_n, size=11)
-    pdf.set_text_color(100, 100, 100)
-    pdf.cell(190, 10, f"Верифікація сертифікату №{row['id']}", ln=True, align='C')
     pdf.ln(10)
 
-    # Таблиця за макетом
-    pdf.set_text_color(0, 0, 0)
     data = [
         ("№ сертифікату", row['id']), ("Ім'я власника", row['name']),
         ("Програма навчання", program_name), ("Інструктор(и)", row['instructor']),
@@ -102,86 +129,73 @@ def generate_pdf(row, expiry_date, program_name, verify_url):
         pdf.cell(65, 12, l, border=1)
         pdf.cell(125, 12, str(v), border=1, ln=True, align='C')
 
-    # QR на PDF
     qr_img = qrcode.make(verify_url)
     qr_img.save("pdf_qr.png")
-    pdf.ln(15)
+    pdf.ln(20)
     pdf.image("pdf_qr.png", x=145, y=pdf.get_y(), w=35)
-    pdf.set_font(f_n, size=9)
-    pdf.text(20, pdf.get_y() + 10, "Відскануйте QR-код для миттєвої")
-    pdf.text(20, pdf.get_y() + 15, "перевірки в базі даних.")
     if os.path.exists("pdf_qr.png"): os.remove("pdf_qr.png")
-    return pdf.output(dest='S').encode('latin-1')
+    return bytes(pdf.output())
 
-# --- ЛОГІКА ДОДАТКА ---
-apply_custom_design("background.webp")
-
-# Обробка URL параметрів (Автоматична перевірка)
-params = st.query_params
-url_cert_id = sanitize_input(params.get("cert_id", ""))
+# --- ЛОГІКА ---
+apply_glass_design(BG_IMAGE)
 
 st.markdown('<h1 class="main-title">Верифікація сертифікату</h1>', unsafe_allow_html=True)
-st.markdown('<p class="sub-title">Результат перевірки в офіційній базі даних</p>', unsafe_allow_html=True)
+st.markdown('<p class="sub-title">Введіть номер вашого документа</p>', unsafe_allow_html=True)
 
-col_l, col_m, col_r = st.columns([1, 2, 1])
-with col_m:
-    cert_input = st.text_input("", value=url_cert_id, placeholder="Номер документа").strip().upper()
+query_params = st.query_params
+url_id = re.sub(r'[^a-zA-Z0-9]', '', query_params.get("cert_id", ""))
+
+col1, col2, col3 = st.columns([1, 2, 1])
+with col2:
+    cert_input = st.text_input("", value=url_id, placeholder="Наприклад: A0001").strip().upper()
     search_btn = st.button("ЗНАЙТИ")
 
-# Виконуємо пошук якщо натиснута кнопка АБО якщо є ID в URL
-if search_btn or url_cert_id:
-    if not check_rate_limit():
-        st.error("Забагато запитів! Спробуйте пізніше.")
-    else:
-        target_id = sanitize_input(cert_input if search_btn else url_cert_id)
-        try:
-            conn = st.connection("gsheets", type=GSheetsConnection)
-            df = conn.read(ttl=300)
-            df.columns = df.columns.str.lower().str.strip()
-            df['id'] = df['id'].astype(str).str.split('.').str[0].str.strip().str.upper()
+if search_btn or url_id:
+    try:
+        conn = st.connection("gsheets", type=GSheetsConnection)
+        df = conn.read(ttl=300)
+        df.columns = df.columns.str.lower().str.strip()
+        df['id'] = df['id'].astype(str).str.split('.').str[0].str.strip().str.upper()
+        
+        target = re.sub(r'[^a-zA-Z0-9]', '', cert_input if search_btn else url_id)
+        match = df[df['id'] == target]
+
+        if not match.empty:
+            row = match.iloc[0]
+            p_id = str(row['program']).split('.')[0].strip()
+            p_name = PROGRAMS.get(p_id, f"Курс №{p_id}")
+            d_exp = pd.to_datetime(row['date'], dayfirst=True) + timedelta(days=1095)
             
-            match = df[df['id'] == target_id]
-            if not match.empty:
-                row = match.iloc[0]
-                p_id = str(row['program']).split('.')[0].strip()
-                p_name = PROGRAMS.get(p_id, f"Курс (ID: {p_id})")
-                d_iss = pd.to_datetime(row['date'], dayfirst=True)
-                d_exp = d_iss + timedelta(days=1095)
-                days = (d_exp - datetime.now()).days
-                
-                # Посилання для QR
-                base_url = "https://verified-sert-xyrgwme8tqwwxtpwwzmsn5.streamlit.app/" # ЗАМІНИТИ ПІСЛЯ ДЕПЛОЮ
-                verify_url = f"{base_url}/?cert_id={target_id}"
-                qr_base64 = get_qr_base64(verify_url)
+            # QR-код (Змініть домен на свій після деплою)
+            verify_url = f"https://verified-sert-xyrgwme8tqwwxtpwwzmsn5.streamlit.app/?cert_id={target}"
+            
+            qr = qrcode.QRCode(box_size=10, border=1)
+            qr.add_data(verify_url)
+            qr.make(fit=True)
+            img_qr = qr.make_image(fill_color="black", back_color="white")
+            buf = BytesIO()
+            img_qr.save(buf, format="PNG")
+            qr_b64 = base64.b64encode(buf.getvalue()).decode()
 
-                status_c = "active-color" if days > 30 else "warning-color" if days >= 0 else "expired-color"
-                status_t = "АКТИВНИЙ" if days > 30 else "ЗАКІНЧУЄТЬСЯ" if days >= 0 else "ТЕРМІН ЗАВЕРШЕНО"
-
-                st.markdown(f"""
-                <div class="result-card">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                        <div style="width: 50%;">
-                            <div class="label">Учасник</div><div class="value">{row['name']}</div>
-                            <div class="label">Програма</div><div class="value">{p_name}</div>
-                            <div class="label">Інструктор</div><div class="value">{row['instructor']}</div>
-                            <div class="label">Статус</div><div class="value {status_c}">● {status_t}</div>
-                        </div>
-                        <div style="width: 25%;">
-                            <div class="label">Видано</div><div class="value">{d_iss.strftime('%d.%m.%Y')}</div>
-                            <div class="label">Дійсний до</div><div class="value">{d_exp.strftime('%d.%m.%Y')}</div>
-                            <div class="label">Днів залишилось</div><div class="value {status_c}">{max(0, days)}</div>
-                        </div>
-                        <div style="width: 20%;" class="qr-container">
-                            <img src="data:image/png;base64,{qr_base64}" width="100%">
-                            <div class="qr-hint">VERIFY QR</div>
-                        </div>
+            st.markdown(f"""
+            <div class="result-card">
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <div style="width: 70%;">
+                        <div class="label-text">Учасник</div><div class="value-text">{row['name']}</div>
+                        <div class="label-text">Програма</div><div class="value-text">{p_name}</div>
+                        <div class="label-text">Статус</div><div class="value-text" style="color:#2ecc71;">● АКТИВНИЙ</div>
+                    </div>
+                    <div style="width: 25%; text-align: center; border: 1px solid #eee; padding: 10px; border-radius: 15px;">
+                        <img src="data:image/png;base64,{qr_b64}" width="100%">
+                        <div style="font-size: 10px; color: #888; margin-top: 5px; font-weight: 700;">SCAN TO VERIFY</div>
                     </div>
                 </div>
-                """, unsafe_allow_html=True)
+            </div>
+            """, unsafe_allow_html=True)
 
-                pdf_bytes = generate_pdf(row, d_exp, p_name, verify_url)
-                st.download_button("📥 ЗАВАНТАЖИТИ PDF ПІДТВЕРДЖЕННЯ", pdf_bytes, f"Verify_{target_id}.pdf")
-            else:
-                st.error("Сертифікат не знайдено.")
-        except Exception as e:
-            st.error(f"Помилка підключення: {e}")
+            pdf_bytes = generate_pdf(row, d_exp, p_name, verify_url)
+            st.download_button("📥 ЗАВАНТАЖИТИ PDF ПІДТВЕРДЖЕННЯ", pdf_bytes, f"Confirm_{target}.pdf")
+        else:
+            st.error("Сертифікат не знайдено. Перевірте номер.")
+    except Exception as e:
+        st.error(f"Помилка підключення: {e}")
