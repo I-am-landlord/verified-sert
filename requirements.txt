@@ -1,6 +1,6 @@
 streamlit
 st-gsheets-connection
 pandas
-qrcode[pil]
-reportlab
-Pillow
+qrcode
+pillow
+fpdf2
