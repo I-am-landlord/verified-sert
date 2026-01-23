@@ -31,7 +31,8 @@ def apply_style(webp_file):
     [data-testid="stAppViewContainer"] {{
         background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 600px), 
                     url("data:image/webp;base64,{bin_str}");
-        background-size: 100% 600px, cover; background-attachment: fixed;
+        background-size: 100% 600px, cover;
+        background-attachment: fixed;
     }}
     .main-title {{ font-size: 48px; font-weight: 800; color: #1a1a1a; text-align: center; margin-top: 30px; }}
     .sub-title {{ font-size: 18px; color: #1a1a1a; text-align: center; margin-bottom: 30px; opacity: 0.8; }}
@@ -52,14 +53,15 @@ def apply_style(webp_file):
         padding: 40px; margin: 30px auto; display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 30px;
         color: #1a1a1a !important;
     }}
-    .label {{ color: #888; font-size: 11px; font-weight: 700; text-transform: uppercase; }}
+    .label {{ color: #888; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 5px; }}
     .value {{ font-size: 18px; font-weight: 600; margin-bottom: 20px; color: #1a1a1a; }}
     
     .st-green {{ color: #2ecc71 !important; font-weight: 800; }}
     .st-yellow {{ color: #f1c40f !important; font-weight: 800; }}
     .st-red {{ color: #e74c3c !important; font-weight: 800; }}
     
-    .social-icon {{ width: 35px; margin: 0 10px; cursor: pointer; }}
+    .social-icon {{ width: 35px; margin: 0 10px; cursor: pointer; transition: 0.3s; }}
+    .social-icon:hover {{ opacity: 0.7; }}
     </style>
     """, unsafe_allow_html=True)
 
@@ -67,9 +69,9 @@ def apply_style(webp_file):
 apply_style(BG_IMAGE)
 
 st.markdown('<h1 class="main-title">Верифікація сертифікату</h1>', unsafe_allow_html=True)
-st.markdown('<p class="sub-title">Введіть номер документа для перевірки</p>', unsafe_allow_html=True)
+st.markdown('<p class="sub-title">Введіть номер документа для перевірки в офіційній базі</p>', unsafe_allow_html=True)
 
-# Отримання ID
+# Обробка ID (URL або Ввід)
 query_params = st.query_params
 default_id = query_params.get("cert_id", "")
 if isinstance(default_id, list): default_id = default_id[0]
@@ -77,13 +79,14 @@ default_id = re.sub(r'[^a-zA-Z0-9]', '', str(default_id)).upper()
 
 _, col_in, _ = st.columns([1, 2, 1])
 with col_in:
-    cert_input = st.text_input("ID", value=default_id, label_visibility="collapsed", placeholder="Введіть номер...").strip().upper()
+    cert_input = st.text_input("ID", value=default_id, label_visibility="collapsed", placeholder="ВВЕДІТЬ НОМЕР...").strip().upper()
     search_btn = st.button("ЗНАЙТИ")
 
 final_id = cert_input if cert_input else default_id
 
 if final_id:
     try:
+        # Підключення до Google Sheets
         conn = st.connection("gsheets", type=GSheetsConnection)
         df = conn.read(ttl=300)
         df.columns = df.columns.str.lower().str.strip()
@@ -97,6 +100,7 @@ if final_id:
             p_name = PROGRAMS.get(p_id, f"Спецкурс №{p_id}")
             
             # Розрахунок термінів
+            # Переконайтеся, що в таблиці дата у форматі ДД.ММ.РРРР
             d_iss = pd.to_datetime(row['date'], dayfirst=True)
             d_exp = d_iss + timedelta(days=1095)
             days_left = (d_exp - datetime.now()).days
@@ -108,42 +112,60 @@ if final_id:
             else:
                 cls, txt = "st-green", "АКТИВНИЙ"
 
-            # QR Код
+            # Генерація QR Коду
             share_url = f"https://verified-sert-xyrgwme8tqwwxtpwwzmsn5.streamlit.app/?cert_id={final_id}"
             qr = qrcode.make(share_url)
             buf = BytesIO()
             qr.save(buf, format="PNG")
             qr_b64 = base64.b64encode(buf.getvalue()).decode()
 
-            # ВІЗУАЛЬНИЙ ВИВІД
+            # ВІЗУАЛЬНИЙ ВИВІД (Один блок для уникнення помилок відображення)
             st.markdown(f"""
             <div class="result-card">
                 <div>
-                    <div class="label">Учасник тренінгу</div><div class="value">{row['name']}</div>
-                    <div class="label">Програма навчання</div><div class="value">{p_name}</div>
-                    <div class="label">Інструктор</div><div class="value">{row['instructor']}</div>
+                    <div class="label">Учасник тренінгу</div>
+                    <div class="value">{row['name']}</div>
+                    <div class="label">Програма навчання</div>
+                    <div class="value">{p_name}</div>
+                    <div class="label">Інструктор</div>
+                    <div class="value">{row['instructor']}</div>
                 </div>
                 <div>
-                    <div class="label">Дата видачі</div><div class="value">{d_iss.strftime('%d.%m.%Y')}</div>
-                    <div class="label">Дійсний до</div><div class="value">{d_exp.strftime('%d.%m.%Y')}</div>
-                    <div class="label">Залишилось днів</div><div class="value {cls}">{max(0, days_left)}</div>
+                    <div class="label">Дата видачі</div>
+                    <div class="value">{d_iss.strftime('%d.%m.%Y')}</div>
+                    <div class="label">Дійсний до</div>
+                    <div class="value">{d_exp.strftime('%d.%m.%Y')}</div>
+                    <div class="label">Залишилось днів</div>
+                    <div class="value {cls}">{max(0, days_left)}</div>
                 </div>
                 
                 <div style="grid-column: span 2; border-top: 1px solid #eee; padding-top: 30px; display: flex; justify-content: space-between; align-items: center;">
-                    <div class="{cls}" style="font-size: 20px;">● {txt}</div>
-                    <img src="data:image/png;base64,{qr_b64}" width="90">
+                    <div class="{cls}" style="font-size: 20px; display: flex; align-items: center;">
+                        <span style="margin-right: 10px;">●</span> {txt}
+                    </div>
+                    <img src="data:image/png;base64,{qr_b64}" width="100" style="border: 1px solid #eee; border-radius: 10px; padding: 5px;">
                 </div>
             </div>
 
-            <div style="text-align: center; margin-top: 20px;">
-                <p style="color:#888; font-weight:bold; font-size:12px; margin-bottom:10px;">ПОДІЛИТИСЯ РЕЗУЛЬТАТОМ:</p>
-                <a href="https://t.me/share/url?url={share_url}" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111646.png" class="social-icon"></a>
-                <a href="viber://forward?text={share_url}" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/3670/3670059.png" class="social-icon"></a>
+            <div style="text-align: center; margin-top: 25px;">
+                <p style="color:#888; font-weight:bold; font-size:12px; margin-bottom:15px; text-transform: uppercase; letter-spacing: 1px;">Поділитися результатом</p>
+                <div style="display: flex; justify-content: center; align-items: center;">
+                    <a href="https://t.me/share/url?url={share_url}" target="_blank">
+                        <img src="https://cdn-icons-png.flaticon.com/512/2111/2111646.png" class="social-icon">
+                    </a>
+                    <a href="viber://forward?text={share_url}" target="_blank">
+                        <img src="https://cdn-icons-png.flaticon.com/512/3670/3670059.png" class="social-icon">
+                    </a>
+                    <a href="https://api.whatsapp.com/send?text={share_url}" target="_blank">
+                        <img src="https://cdn-icons-png.flaticon.com/512/733/733585.png" class="social-icon">
+                    </a>
+                </div>
             </div>
             """, unsafe_allow_html=True)
             
         else:
-            st.error(f"Сертифікат №{final_id} не знайдено.")
+            st.error(f"Сертифікат №{final_id} не знайдено в базі даних. Перевірте правильність вводу.")
             
     except Exception as e:
-        st.error(f"Помилка з'єднання з таблицею: {e}")
+        st.error(f"Критична помилка додатка: {e}")
+        st.info("Перевірте структуру Google-таблиці та налаштування Secrets.")
