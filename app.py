@@ -2,14 +2,12 @@ import streamlit as st
 from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 import qrcode
-import os
 import re
 import base64
 from io import BytesIO
 from datetime import datetime, timedelta
 
 # --- КОНФІГУРАЦІЯ ---
-BG_IMAGE = "background.webp"
 PROGRAMS = {
     "1": "6-ти годинний тренінг з першої допомоги",
     "2": "12-ти годинний тренінг з першої допомоги",
@@ -19,194 +17,109 @@ PROGRAMS = {
 
 st.set_page_config(page_title="Verify Center", layout="wide")
 
-# --- СТИЛІЗАЦІЯ ---
-def apply_style(webp_file):
-    bin_str = ""
-    if os.path.exists(webp_file):
-        with open(webp_file, "rb") as f:
-            bin_str = base64.b64encode(f.read()).decode()
-            
-    st.markdown(f"""
-    <style>
-    [data-testid="stAppViewContainer"] {{
-        background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 600px), 
-                    url("data:image/webp;base64,{bin_str}");
-        background-size: 100% 600px, cover;
-        background-attachment: fixed;
-    }}
-    .main-title {{ font-size: 42px; font-weight: 800; color: #1a1a1a; text-align: center; margin-top: 30px; }}
-    
-    /* Біле поле вводу з чорною рамкою */
-    div[data-baseweb="input"] {{
-        background-color: white !important;
-        border: 2px solid #000000 !important;
-        border-radius: 12px !important;
-    }}
-    input {{ color: #000 !important; font-size: 18px !important; text-align: center !important; }}
+# --- САНІТАЙЗЕР (БЕЗПЕКА) ---
+def sanitize_id(input_str):
+    # Видаляємо все, крім літер та цифр (Захист від XSS та ін'єкцій)
+    return re.sub(r'[^a-zA-Z0-9]', '', str(input_str)).upper()
 
-    /* Кнопка по центру */
-    .stButton {{ display: flex; justify-content: center; }}
-    .stButton > button {{
-        background-color: #000 !important;
-        color: #fff !important;
-        padding: 10px 60px !important;
-        border-radius: 50px !important;
-        font-weight: 700;
-        margin-top: 15px;
-    }}
-
-    /* Дизайн Картки */
-    .result-card {{
-        background: #ffffff;
-        max-width: 800px;
-        margin: 20px auto;
-        padding: 35px;
-        border-radius: 25px;
-        border: 1px solid #ddd;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-    }}
-    .label {{ color: #777; font-size: 12px; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; }}
-    .value {{ color: #000; font-size: 18px; font-weight: 600; margin-bottom: 18px; line-height: 1.2; }}
-    
-    /* Статуси */
-    .st-green {{ color: #2ecc71 !important; font-weight: 800; }}
-    .st-yellow {{ color: #f1c40f !important; font-weight: 800; }}
-    .st-red {{ color: #e74c3c !important; font-weight: 800; }}
-
-    /* Рекламний блок */
-    .promo-container {{
-        position: relative;
-        height: 150px;
-        border-radius: 15px;
-        overflow: hidden;
-        margin: 20px 0;
-        border: 1px solid #000;
-    }}
-    .promo-bg {{
+# --- CSS (БЕЗПЕЧНИЙ) ---
+st.markdown("""
+<style>
+    .result-card {
+        background: white; max-width: 800px; margin: 0 auto; padding: 30px;
+        border-radius: 25px; border: 1px solid #ddd; color: black !important;
+    }
+    .st-green { color: #2ecc71 !important; font-weight: bold; }
+    .st-yellow { color: #f1c40f !important; font-weight: bold; }
+    .st-red { color: #e74c3c !important; font-weight: bold; }
+    .promo-box {
+        display: block; position: relative; height: 140px; border-radius: 15px;
+        overflow: hidden; border: 1px solid black; margin: 15px 0;
+    }
+    .promo-bg {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
         background-size: cover; background-position: center;
         filter: brightness(0.3) grayscale(1); transition: 0.5s;
-    }}
-    .promo-container:hover .promo-bg {{ filter: brightness(0.7) grayscale(0); }}
-    .promo-text {{ position: relative; z-index: 2; color: #fff; text-align: center; padding: 35px 15px; }}
-    
-    .social-icon {{ width: 32px; margin: 0 8px; transition: 0.2s; }}
-    .social-icon:hover {{ transform: scale(1.1); }}
-    </style>
-    """, unsafe_allow_html=True)
-
-# --- ЛОГІКА РЕКЛАМИ ---
-def get_promo_data(p_id, days_left):
-    is_expired = days_left < 0
-    imgs = {
-        "human": "https://images.unsplash.com/photo-1516589091380-5d8e87df6999?w=800",
-        "pets": "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=800"
     }
-    if is_expired:
-        return {"t": "ПОНОВІТЬ ЗНАННЯ", "d": "Термін дії сертифіката вичерпано. Запишіться на курс зі знижкою!", "img": imgs['human'], "url": "https://yoursite.com/renew"}
-    if p_id == "4":
-        return {"t": "ДОПОМОГА ЛЮДЯМ", "d": "Ви вже рятуєте тварин. Час опанувати допомогу людям!", "img": imgs['human'], "url": "https://yoursite.com/human"}
-    return {"t": "ДОПОМОГА ТВАРИНАМ", "d": "Станьте героєм і для чотирилапих. Наш курс допомоги тваринам!", "img": imgs['pets'], "url": "https://yoursite.com/pets"}
+    .promo-box:hover .promo-bg { filter: brightness(0.7) grayscale(0); }
+    .promo-text { position: relative; z-index: 2; color: white; text-align: center; padding: 35px 10px; }
+</style>
+""", unsafe_allow_html=True)
 
-# --- ДОДАТОК ---
-apply_style(BG_IMAGE)
+st.title("🛡️ Верифікація сертифікату")
 
-st.markdown('<h1 class="main-title">Верифікація сертифікату</h1>', unsafe_allow_html=True)
+# Обробка ID
+raw_id = st.query_params.get("cert_id", [""])[0]
+user_input = st.text_input("Введіть номер документа", value=sanitize_id(raw_id)).strip()
+search_clicked = st.button("ЗНАЙТИ")
 
-# Обробка вводу
-query_params = st.query_params
-url_id = query_params.get("cert_id", "")
-if isinstance(url_id, list): url_id = url_id[0]
+current_id = sanitize_id(user_input if search_clicked else raw_id)
 
-_, col_mid, _ = st.columns([1, 1.5, 1])
-with col_mid:
-    user_input = st.text_input("ID", value=url_id, placeholder="Введіть номер документа", label_visibility="collapsed").strip().upper()
-    search_triggered = st.button("ЗНАЙТИ")
-
-# Кінцевий ID для пошуку
-search_id = user_input if user_input else url_id
-search_id = re.sub(r'[^a-zA-Z0-9]', '', str(search_id))
-
-if search_id:
+if current_id:
     try:
         conn = st.connection("gsheets", type=GSheetsConnection)
         df = conn.read(ttl=300)
         df.columns = df.columns.str.lower().str.strip()
-        df['id'] = df['id'].astype(str).str.split('.').str[0].str.strip().str.upper()
         
-        match = df[df['id'] == search_id]
+        # Безпечний пошук у Pandas
+        df['id'] = df['id'].astype(str).str.split('.').str[0].str.strip().upper()
+        match = df[df['id'] == current_id]
 
         if not match.empty:
             row = match.iloc[0]
-            p_id = str(row['program']).split('.')[0].strip()
-            p_name = PROGRAMS.get(p_id, f"Курс №{p_id}")
             
-            # Розрахунок статусу
+            # Логіка дат
             d_iss = pd.to_datetime(row['date'], dayfirst=True)
             d_exp = d_iss + timedelta(days=1095)
             days_left = (d_exp - datetime.now()).days
 
+            # Вибір статусу
             if days_left < 0:
-                st_cls, st_txt = "st-red", "ТЕРМІН ДІЇ ЗАВЕРШЕНО"
+                color, status = "st-red", "ТЕРМІН ДІЇ ЗАВЕРШЕНО"
             elif days_left <= 30:
-                st_cls, st_txt = "st-yellow", "ПІДХОДИТЬ ДО КІНЦЯ"
+                color, status = "st-yellow", "ПІДХОДИТЬ ДО КІНЦЯ"
             else:
-                st_cls, st_txt = "st-green", "АКТИВНИЙ"
+                color, status = "st-green", "АКТИВНИЙ"
 
-            # QR-код
-            share_url = f"https://verify.streamlit.app/?cert_id={search_id}"
-            qr_img = qrcode.make(share_url)
+            # Реклама (Безпечне формування)
+            p_img = "https://images.unsplash.com/photo-1516589091380-5d8e87df6999?w=400"
+            p_title = "ПЕРША ДОПОМОГА ТВАРИНАМ"
+            
+            # QR
+            qr = qrcode.make(f"https://verified-sert-xyrgwme8tqwwxtpwwzmsn5.streamlit.app/?cert_id={current_id}")
             buf = BytesIO()
-            qr_img.save(buf, format="PNG")
+            qr.save(buf, format="PNG")
             qr_b64 = base64.b64encode(buf.getvalue()).decode()
 
-            # Реклама
-            promo = get_promo_data(p_id, days_left)
-
-            # --- ВИВІД КАРТКИ (ЧЕРЕЗ ОДИН HTML БЛОК ДЛЯ СТАБІЛЬНОСТІ) ---
+            # --- ВІДОБРАЖЕННЯ (Кожен блок через окремий markdown) ---
             st.markdown(f"""
             <div class="result-card">
-                <div style="display: flex; flex-wrap: wrap; justify-content: space-between;">
-                    <div style="flex: 1; min-width: 250px;">
-                        <div class="label">Учасник тренінгу</div><div class="value">{row['name']}</div>
-                        <div class="label">Програма навчання</div><div class="value">{p_name}</div>
-                        <div class="label">Інструктор</div><div class="value">{row['instructor']}</div>
+                <div style="display: flex; justify-content: space-between;">
+                    <div>
+                        <small>УЧАСНИК</small><br><b>{row['name']}</b><br><br>
+                        <small>КУРС</small><br><b>{PROGRAMS.get(str(row['program'])[0], 'Спецкурс')}</b>
                     </div>
-                    <div style="flex: 1; min-width: 150px; text-align: right;">
-                        <div class="label">Дата видачі</div><div class="value">{d_iss.strftime('%d.%m.%Y')}</div>
-                        <div class="label">Дійсний до</div><div class="value">{d_exp.strftime('%d.%m.%Y')}</div>
-                        <div class="label">Залишилось днів</div><div class="value {st_cls}">{max(0, days_left)}</div>
+                    <div style="text-align: right;">
+                        <small>ДІЙСНИЙ ДО</small><br><b>{d_exp.strftime('%d.%m.%Y')}</b><br><br>
+                        <small>ДНІВ ЗАЛИШИЛОСЬ</small><br><b class="{color}">{max(0, days_left)}</b>
+                    </div>
+                </div>
+                
+                <div class="promo-box">
+                    <div class="promo-bg" style="background-image: url('{p_img}');"></div>
+                    <div class="promo-text">
+                        <b>{p_title}</b><br><small>Запишіться на розширений тренінг</small>
                     </div>
                 </div>
 
-                <a href="{promo['url']}" target="_blank" style="text-decoration: none;">
-                    <div class="promo-container">
-                        <div class="promo-bg" style="background-image: url('{promo['img']}');"></div>
-                        <div class="promo-text">
-                            <div style="font-weight: 800; font-size: 18px;">{promo['t']}</div>
-                            <div style="font-size: 13px; opacity: 0.9;">{promo['d']}</div>
-                        </div>
-                    </div>
-                </a>
-
-                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; padding-top: 20px;">
-                    <div class="{st_cls}" style="font-size: 18px; font-weight: 800;">● {st_txt}</div>
-                    <img src="data:image/png;base64,{qr_b64}" width="85">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; padding-top: 15px;">
+                    <div class="{color}" style="font-size: 20px;">● {status}</div>
+                    <img src="data:image/png;base64,{qr_b64}" width="80">
                 </div>
             </div>
             """, unsafe_allow_html=True)
-
-            # Соцмережі
-            st.markdown(f"""
-            <div style="text-align: center; margin-top: 20px;">
-                <p style="font-size: 11px; font-weight: 800; color: #555;">ПОДІЛИТИСЯ:</p>
-                <a href="https://t.me/share/url?url={share_url}" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111646.png" class="social-icon"></a>
-                <a href="viber://forward?text={share_url}" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/3670/3670059.png" class="social-icon"></a>
-                <a href="https://api.whatsapp.com/send?text={share_url}" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/733/733585.png" class="social-icon"></a>
-            </div>
-            """, unsafe_allow_html=True)
-
+            
         else:
-            st.error(f"Документ №{search_id} не знайдено.")
+            st.error("Документ не знайдено.")
     except Exception as e:
-        st.warning("Завантаження даних... Спробуйте натиснути кнопку 'Знайти' ще раз.")
+        st.error("Помилка доступу до даних.")
