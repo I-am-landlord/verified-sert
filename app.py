@@ -8,8 +8,9 @@ import os
 from io import BytesIO
 from datetime import datetime, timedelta
 
-# --- КОНФІГУРАЦІЯ ---
-BG_IMAGE = "background.webp"
+# --- 1. КОНФІГУРАЦІЯ ---
+st.set_page_config(page_title="Verify Center", layout="wide")
+
 PROGRAMS = {
     "1": "6-ти годинний тренінг з першої допомоги",
     "2": "12-ти годинний тренінг з першої допомоги",
@@ -17,150 +18,126 @@ PROGRAMS = {
     "4": "Тренінг з першої допомоги домашнім тваринам"
 }
 
-st.set_page_config(page_title="Verify Center", layout="wide")
+def sanitize(text):
+    return re.sub(r'[^a-zA-Z0-9]', '', str(text)).upper() if text else ""
 
-def clean_id(text):
-    if text is None: return ""
-    return re.sub(r'[^a-zA-Z0-9]', '', str(text)).upper()
-
-# --- СТИЛІ (ВАШ ДИЗАЙН) ---
-def apply_custom_styles(webp_file):
-    bin_str = ""
-    if os.path.exists(webp_file):
-        with open(webp_file, "rb") as f:
-            bin_str = base64.b64encode(f.read()).decode()
-            
+# --- 2. ДИЗАЙН (ВАШ МАКЕТ) ---
+def inject_design():
+    bg_path = "background.webp"
+    bg_b64 = ""
+    if os.path.exists(bg_path):
+        with open(bg_path, "rb") as f:
+            bg_b64 = base64.b64encode(f.read()).decode()
+    
     st.markdown(f"""
     <style>
     [data-testid="stAppViewContainer"] {{
         background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 600px), 
-                    url("data:image/webp;base64,{bin_str}");
+                    url("data:image/webp;base64,{bg_b64}");
         background-size: 100% 600px, cover; background-attachment: fixed;
     }}
-    .main-title {{ font-size: 48px; font-weight: 800; color: #1a1a1a; text-align: center; margin-top: 40px; }}
-    .sub-title {{ font-size: 18px; color: #1a1a1a; text-align: center; margin-bottom: 30px; opacity: 0.8; }}
-    
-    /* Картка результату */
+    .main-title {{ font-size: 46px; font-weight: 800; text-align: center; margin-top: 40px; color: #1a1a1a; }}
     .result-card {{
-        background: #ffffff; width: 100%; max-width: 850px; border-radius: 30px;
-        border: 1px solid #e0e0e0; box-shadow: 0 20px 50px rgba(0,0,0,0.05);
-        padding: 45px; margin: 30px auto; display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 40px;
+        background: white; max-width: 850px; border-radius: 30px;
+        border: 1px solid #e0e0e0; box-shadow: 0 20px 50px rgba(0,0,0,0.06);
+        padding: 40px; margin: 30px auto; display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 30px;
     }}
-    .label {{ color: #888; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; }}
-    .value {{ color: #1a1a1a; font-size: 19px; font-weight: 600; margin-bottom: 25px; }}
+    .label {{ color: #888; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 5px; }}
+    .value {{ color: #1a1a1a; font-size: 18px; font-weight: 600; margin-bottom: 20px; }}
+    .st-green {{ color: #2ecc71 !important; }} .st-yellow {{ color: #f1c40f !important; }} .st-red {{ color: #e74c3c !important; }}
     
-    /* Статуси */
-    .active-status {{ color: #2ecc71 !important; font-weight: 800; }}
-    .warning-status {{ color: #f1c40f !important; font-weight: 800; }}
-    .expired-status {{ color: #e74c3c !important; font-weight: 800; }}
-
-    /* Реклама */
     .promo-card {{
-        grid-column: span 2; position: relative; height: 180px; border-radius: 20px;
-        overflow: hidden; border: 1.5px solid #1a1a1a;
+        grid-column: span 2; position: relative; height: 160px; border-radius: 20px;
+        overflow: hidden; border: 1.5px solid #1a1a1a; text-decoration: none !important;
     }}
     .promo-bg {{
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        background-size: cover; background-position: center;
-        filter: brightness(0.2) grayscale(1); transition: 0.6s ease;
+        background-image: url('https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=800');
+        background-size: cover; filter: brightness(0.25); transition: 0.5s;
     }}
-    .promo-card:hover .promo-bg {{ filter: brightness(0.8) grayscale(0); }}
-    .promo-content {{ position: relative; z-index: 2; color: white; text-align: center; padding: 45px 20px; }}
+    .promo-card:hover .promo-bg {{ filter: brightness(0.6); }}
+    .promo-text {{ position: relative; z-index: 2; color: white; text-align: center; padding: 40px; }}
     
-    /* Пошук */
-    div[data-baseweb="input"] {{
-        background-color: white !important; border: 2.5px solid #1a1a1a !important; border-radius: 16px !important;
-    }}
-    .stButton > button {{
-        background: #1a1a1a !important; color: white !important; padding: 10px 80px !important; border-radius: 50px !important;
-    }}
+    div[data-baseweb="input"] {{ border: 2.5px solid #1a1a1a !important; border-radius: 14px !important; }}
+    .stButton > button {{ background: #1a1a1a !important; color: white !important; border-radius: 50px !important; padding: 10px 60px !important; }}
     </style>
     """, unsafe_allow_html=True)
 
-apply_custom_styles(BG_IMAGE)
-
+# --- 3. ГОЛОВНА ЛОГІКА ---
+inject_design()
 st.markdown('<h1 class="main-title">Верифікація сертифікату</h1>', unsafe_allow_html=True)
-st.markdown('<p class="sub-title">Офіційна база даних документів</p>', unsafe_allow_html=True)
 
-# Отримання ID
-query_params = st.query_params
-url_id = query_params.get("cert_id", "")
-if isinstance(url_id, list): url_id = url_id[0]
-url_id = clean_id(url_id)
+# Обробка ID
+q_id = sanitize(st.query_params.get("cert_id", ""))
+_, col_in, _ = st.columns([1, 2, 1])
+with col_in:
+    u_input = st.text_input("Пошук", value=q_id, placeholder="Номер документа", label_visibility="collapsed").strip().upper()
+    clicked = st.button("ПЕРЕВІРИТИ")
 
-_, col_search, _ = st.columns([1, 2, 1])
-with col_search:
-    # ВИПРАВЛЕНО: label тепер не пустий
-    user_input = st.text_input("Введіть ID", value=url_id, placeholder="Номер сертифікату", label_visibility="collapsed").strip().upper()
-    search_btn = st.button("ЗНАЙТИ")
+final_id = sanitize(u_input if clicked else q_id)
 
-target_id = clean_id(user_input if search_btn else url_id)
-
-if target_id:
+if final_id:
     try:
         conn = st.connection("gsheets", type=GSheetsConnection)
         df = conn.read(ttl=300)
         
-        # Захист від порожньої таблиці
-        if df is not None and not df.empty:
-            df.columns = df.columns.str.lower().str.strip()
-            df['id'] = df['id'].astype(str).str.split('.').str[0].str.strip().upper()
+        # Очищення даних таблиці
+        df.columns = df.columns.str.lower().str.strip()
+        df['id'] = df['id'].astype(str).str.split('.').str[0].str.strip().upper()
+        
+        match = df[df['id'] == final_id]
+
+        if not match.empty:
+            row = match.iloc[0]
             
-            match = df[df['id'] == target_id]
+            # Розрахунок термінів (3 роки)
+            d_iss = pd.to_datetime(row['date'], dayfirst=True)
+            d_exp = d_iss + timedelta(days=1095)
+            days_left = (d_exp - datetime.now()).days
 
-            if not match.empty:
-                row = match.iloc[0]
-                p_id = str(row['program']).split('.')[0].strip()
-                
-                # Логіка дат
-                d_iss = pd.to_datetime(row['date'], dayfirst=True)
-                d_exp = d_iss + timedelta(days=1095)
-                days_left = (d_exp - datetime.now()).days
-
-                if days_left < 0:
-                    cls, txt = "expired-status", "ТЕРМІН ДІЇ ЗАВЕРШЕНО"
-                elif days_left <= 30:
-                    cls, txt = "warning-status", "ПІДХОДИТЬ ДО КІНЦЯ"
-                else:
-                    cls, txt = "active-status", "АКТИВНИЙ"
-
-                # QR
-                qr = qrcode.make(f"https://verify.streamlit.app/?cert_id={target_id}")
-                buf = BytesIO()
-                qr.save(buf, format="PNG")
-                qr_b64 = base64.b64encode(buf.getvalue()).decode()
-
-                # Реклама
-                p_img = "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=800"
-                p_title = "ПЕРША ДОПОМОГА ТВАРИНАМ"
-
-                # КАРТКА
-                st.markdown(f"""
-                <div class="result-card">
-                    <div>
-                        <div class="label">Учасник тренінгу</div><div class="value">{row['name']}</div>
-                        <div class="label">Програма навчання</div><div class="value">{PROGRAMS.get(p_id, 'Курс першої допомоги')}</div>
-                        <div class="label">Інструктор</div><div class="value">{row.get('instructor', 'Інструктор Центру')}</div>
-                    </div>
-                    <div>
-                        <div class="label">Дата видачі</div><div class="value">{d_iss.strftime('%d.%m.%Y')}</div>
-                        <div class="label">Дійсний до</div><div class="value">{d_exp.strftime('%d.%m.%Y')}</div>
-                        <div class="label">Залишилось днів</div><div class="value {cls}">{max(0, days_left)}</div>
-                    </div>
-                    <div class="promo-card">
-                        <div class="promo-bg" style="background-image: url('{p_img}');"></div>
-                        <div class="promo-content">
-                            <div style="font-weight:800; font-size:20px;">{p_title}</div>
-                            <div style="font-size:13px;">Отримайте знижку 15% як випускник</div>
-                        </div>
-                    </div>
-                    <div style="grid-column: span 2; border-top: 1px solid #eee; padding-top: 25px; display: flex; justify-content: space-between; align-items: center;">
-                        <div class="{cls}" style="font-size: 18px;">● СТАТУС: {txt}</div>
-                        <img src="data:image/png;base64,{qr_b64}" width="90">
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
+            # Визначення статусу
+            if days_left < 0:
+                cls, status = "st-red", "ТЕРМІН ДІЇ ЗАВЕРШЕНО"
+            elif days_left <= 30:
+                cls, status = "st-yellow", "ПОТРЕБУЄ ОНОВЛЕННЯ"
             else:
-                st.error(f"Документ {target_id} не знайдено.")
+                cls, status = "st-green", "АКТИВНИЙ"
+
+            # QR
+            qr = qrcode.make(f"https://verified-sert-xyrgwme8tqwwxtpwwzmsn5.streamlit.app/?cert_id={final_id}")
+            buf = BytesIO()
+            qr.save(buf, format="PNG")
+            qr_b64 = base64.b64encode(buf.getvalue()).decode()
+
+            # Вивід Картки
+            st.markdown(f"""
+            <div class="result-card">
+                <div>
+                    <div class="label">Учасник</div><div class="value">{row['name']}</div>
+                    <div class="label">Курс</div><div class="value">{PROGRAMS.get(str(row['program'])[0], 'Спецкурс')}</div>
+                    <div class="label">Інструктор</div><div class="value">{row['instructor']}</div>
+                </div>
+                <div>
+                    <div class="label">Дата видачі</div><div class="value">{d_iss.strftime('%d.%m.%Y')}</div>
+                    <div class="label">Дійсний до</div><div class="value">{d_exp.strftime('%d.%m.%Y')}</div>
+                    <div class="label">Статус</div><div class="value {cls}">● {status}</div>
+                </div>
+                
+                <a href="#" class="promo-card">
+                    <div class="promo-bg"></div>
+                    <div class="promo-text">
+                        <div style="font-weight:800; font-size:20px;">ДОПОМОГА ТВАРИНАМ</div>
+                        <div style="font-size:13px;">Знижка 15% за вашим номером сертифікату</div>
+                    </div>
+                </a>
+
+                <div style="grid-column: span 2; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; padding-top: 20px;">
+                    <div style="font-size: 14px; color: #aaa;">ID: {final_id}</div>
+                    <img src="data:image/png;base64,{qr_b64}" width="80">
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.error(f"Документ {final_id} не знайдено.")
     except Exception as e:
-        st.error("Системна помилка. Перевірте з'єднання з таблицею.")
+        st.error("Помилка бази даних. Перевірте Secrets та структуру таблиці.")
