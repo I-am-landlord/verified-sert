@@ -127,17 +127,15 @@ if final_id:
             else:
                 cls, txt = "st-green", "АКТИВНИЙ"
 
-            # QR
             share_url = f"https://verified-sert-xyrgwme8tqwwxtpwwzmsn5.streamlit.app/?cert_id={final_id}"
             qr = qrcode.make(share_url)
             buf = BytesIO()
             qr.save(buf, format="PNG")
             qr_b64 = base64.b64encode(buf.getvalue()).decode()
 
-            # Дані для реклами
-            promo = get_promo(p_id, is_expired)
+            promo = get_promo(p_id, days_left < 0)
 
-            # Вивід картки
+            # --- ЄДИНИЙ БЛОК ВИВОДУ (ФІКС) ---
             st.markdown(f"""
             <div class="result-card">
                 <div>
@@ -164,18 +162,14 @@ if final_id:
                     <img src="data:image/png;base64,{qr_b64}" width="80">
                 </div>
             </div>
-            """, unsafe_allow_html=True)
 
-            # Соціальні мережі
-            st.markdown(f"""
             <div style="text-align: center; margin-top: 20px;">
-                <p style="color:#000; font-weight:bold; font-size:12px;">ПОДІЛИТИСЯ РЕЗУЛЬТАТОМ:</p>
+                <p style="color:#000; font-weight:bold; font-size:12px; margin-bottom:10px;">ПОДІЛИТИСЯ РЕЗУЛЬТАТОМ:</p>
                 <a href="https://t.me/share/url?url={share_url}" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111646.png" class="social-icon"></a>
                 <a href="viber://forward?text={share_url}" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/3670/3670059.png" class="social-icon"></a>
+                <a href="https://api.whatsapp.com/send?text={share_url}" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/733/733585.png" class="social-icon"></a>
             </div>
             """, unsafe_allow_html=True)
-            
+
         else:
             st.error(f"Сертифікат №{final_id} не знайдено.")
-    except Exception as e:
-        st.error(f"Помилка: {e}")
