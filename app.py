@@ -8,6 +8,7 @@ import re
 import html
 from datetime import datetime, timedelta
 from fpdf import FPDF
+# Для fpdf2 використовуємо FPDF з fpdf
 import tempfile
 import hashlib
 
