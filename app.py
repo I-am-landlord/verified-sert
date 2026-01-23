@@ -7,10 +7,13 @@ import base64
 import re
 import html
 from datetime import datetime, timedelta
-from fpdf import FPDF
-# Для fpdf2 використовуємо FPDF з fpdf
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib.units import mm
 import tempfile
-import hashlib
+import io
 
 # --- КОНСТАНТИ ---
 PROGRAMS = {
@@ -20,28 +23,21 @@ PROGRAMS = {
     "4": "Тренінг з першої допомоги домашнім тваринам"
 }
 
-# Безпечний URL додатку (краще використати змінну оточення)
-APP_URL = os.getenv("APP_URL", "https://verify-center.streamlit.app")
-
-# Регулярний вираз для валідації ID сертифіката (тільки літери та цифри)
+APP_URL = os.getenv("APP_URL", "https://verified-sert-xyrgwme8tqwwxtpwwzmsn5.streamlit.app/")
 CERT_ID_PATTERN = re.compile(r'^[A-Z0-9]{1,20}$')
 
 # --- ФУНКЦІЇ БЕЗПЕКИ ---
 def sanitize_html(text):
-    """Очищення тексту від HTML/JS для безпечного виводу"""
     if pd.isna(text):
         return ""
     return html.escape(str(text))
 
 def validate_cert_id(cert_id):
-    """Валідація номера сертифіката"""
     if not cert_id:
         return False
-    # Тільки латинські літери та цифри, до 20 символів
     return bool(CERT_ID_PATTERN.match(cert_id))
 
 def rate_limit_check():
-    """Проста перевірка rate limiting через session state"""
     if 'last_search_time' not in st.session_state:
         st.session_state.last_search_time = datetime.now()
         st.session_state.search_count = 0
@@ -49,21 +45,18 @@ def rate_limit_check():
     
     time_diff = (datetime.now() - st.session_state.last_search_time).seconds
     
-    # Скидання лічильника кожну хвилину
     if time_diff > 60:
         st.session_state.search_count = 0
         st.session_state.last_search_time = datetime.now()
     
-    # Максимум 10 пошуків на хвилину
     if st.session_state.search_count >= 10:
         return False
     
     st.session_state.search_count += 1
     return True
 
-# --- ФУНКЦІЇ ФОНУ ТА СТИЛІВ ---
+# --- ФУНКЦІЇ ФОНУ ---
 def get_base64(bin_file):
-    """Безпечне читання файлу в base64"""
     try:
         with open(bin_file, 'rb') as f:
             return base64.b64encode(f.read()).decode()
@@ -75,7 +68,6 @@ def apply_custom_design(webp_file):
     bin_str = get_base64(webp_file) if os.path.exists(webp_file) else ""
     st.markdown(f'''
     <style>
-    /* Градієнтний фон з картинкою */
     [data-testid="stAppViewContainer"] {{
         background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 500px), 
                     url("data:image/webp;base64,{bin_str}");
@@ -91,23 +83,22 @@ def apply_custom_design(webp_file):
         padding-right: 1rem !important;
     }}
     
-    /* Заголовки */
+    /* ВИПРАВЛЕНО: Чорний колір заголовків */
     .main-title {{ 
         font-size: clamp(28px, 5vw, 48px); 
         font-weight: 800; 
-        color: #1a1a1a; 
+        color: #000000 !important; 
         text-align: center; 
         margin-bottom: 0; 
     }}
     .sub-title {{ 
         font-size: clamp(14px, 3vw, 18px); 
-        color: #1a1a1a; 
+        color: #000000 !important; 
         text-align: center; 
         margin-bottom: 3rem; 
         opacity: 0.8; 
     }}
 
-    /* Поле пошуку */
     .stTextInput > div > div > input {{
         border: 2.5px solid #1a1a1a !important; 
         border-radius: 16px !important;
@@ -116,7 +107,13 @@ def apply_custom_design(webp_file):
         text-align: center;
     }}
     
-    /* Кнопка Знайти */
+    /* ВИПРАВЛЕНО: Центрування кнопки */
+    div.stButton {{
+        display: flex;
+        justify-content: center;
+        width: 100%;
+    }}
+    
     div.stButton > button {{
         border-radius: 50px !important; 
         border: 2.5px solid #1a1a1a !important;
@@ -124,12 +121,11 @@ def apply_custom_design(webp_file):
         color: white !important;
         padding: 15px 80px !important; 
         font-weight: 800 !important; 
-        width: 100% !important;
-        margin: 0 auto; 
-        display: block;
+        width: auto !important;
+        margin: 0 auto !important;
+        display: block !important;
     }}
 
-    /* Картка верифікації */
     .result-card {{
         background: white; 
         border-radius: 30px; 
@@ -159,7 +155,6 @@ def apply_custom_design(webp_file):
         word-wrap: break-word;
     }}
     
-    /* Кольори статусів */
     .active {{ color: #2ecc71 !important; }}
     .warning {{ color: #f1c40f !important; }}
     .expired {{ color: #e74c3c !important; }}
@@ -171,7 +166,6 @@ def apply_custom_design(webp_file):
         margin-top: 10px;
     }}
     
-    /* Мобільна адаптація */
     @media (max-width: 768px) {{
         .result-content {{
             flex-direction: column !important;
@@ -188,42 +182,38 @@ def apply_custom_design(webp_file):
     </style>
     ''', unsafe_allow_html=True)
 
-# --- ГЕНЕРАЦІЯ PDF ---
+# --- ГЕНЕРАЦІЯ PDF (ВИПРАВЛЕНО) ---
 def generate_certified_pdf(row, status, expiry_date, program_name, days_left):
-    """Генерація PDF з підтвердженням сертифікату"""
-    pdf = FPDF()
-    pdf.add_page()
+    """Генерація PDF з використанням ReportLab - ВИПРАВЛЕНО повернення bytes"""
+    buffer = io.BytesIO()
+    c = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
     
-    # ВИПРАВЛЕНО: правильна назва файлу шрифту
+    # Реєстрація шрифту
     font_path = "dejavu-sans.book.ttf"
     if os.path.exists(font_path):
         try:
-            pdf.add_font("DejaVu", "", font_path, uni=True)
-            pdf.set_font("DejaVu", size=12)
-            f_main = "DejaVu"
+            pdfmetrics.registerFont(TTFont('DejaVu', font_path))
+            font_name = 'DejaVu'
         except Exception as e:
-            st.warning(f"Не вдалося завантажити шрифт: {e}")
-            pdf.set_font("Helvetica", size=12)
-            f_main = "Helvetica"
+            st.warning(f"Шрифт не завантажено: {e}")
+            font_name = 'Helvetica'
     else:
-        pdf.set_font("Helvetica", size=12)
-        f_main = "Helvetica"
-
-    # Заголовок
-    pdf.set_font(f_main, size=24)
-    pdf.cell(190, 20, "Підтвердження", ln=True, align='C')
-    pdf.set_font(f_main, size=11)
-    pdf.set_text_color(100, 100, 100)
-    # Санітизація даних для PDF
-    cert_id_safe = str(row['id'])[:50]  # Обмеження довжини
-    pdf.cell(190, 10, f"Підтвердження актуальності сертифікату №{cert_id_safe}", ln=True, align='C')
-    pdf.ln(15)
-
-    # Таблиця
-    pdf.set_draw_color(0, 0, 0)
-    pdf.set_text_color(0, 0, 0)
+        font_name = 'Helvetica'
     
-    # Безпечне форматування дати
+    # Заголовок
+    c.setFont(font_name, 24)
+    c.drawCentredString(width/2, height - 60, "Підтвердження")
+    
+    c.setFont(font_name, 11)
+    c.setFillColorRGB(0.4, 0.4, 0.4)
+    cert_id_safe = str(row['id'])[:50]
+    c.drawCentredString(width/2, height - 80, f"Підтвердження актуальності сертифікату №{cert_id_safe}")
+    
+    # Таблиця
+    c.setFillColorRGB(0, 0, 0)
+    y_pos = height - 140
+    
     try:
         date_str = pd.to_datetime(row['date']).strftime('%d.%m.%Y')
     except:
@@ -237,40 +227,43 @@ def generate_certified_pdf(row, status, expiry_date, program_name, days_left):
         ("Дата видачі", date_str),
         ("Дійсний до", expiry_date.strftime('%d.%m.%Y'))
     ]
-
-    x_start = 20
-    col_width = [60, 110]
     
-    for label, val in data:
-        pdf.set_x(x_start)
-        pdf.set_font(f_main, size=11)
-        pdf.cell(col_width[0], 12, label, border=1)
-        pdf.set_font(f_main, size=11)
-        pdf.cell(col_width[1], 12, str(val), border=1, ln=True, align='C')
-
-    # QR-код з використанням тимчасового файлу (безпечно)
+    c.setFont(font_name, 11)
+    for label, value in data:
+        # Рамка
+        c.rect(50, y_pos - 15, 150, 20)
+        c.rect(200, y_pos - 15, 340, 20)
+        
+        # Текст
+        c.drawString(55, y_pos - 10, label)
+        c.drawCentredString(370, y_pos - 10, str(value))
+        y_pos -= 20
+    
+    # QR-код
     try:
         app_url = f"{APP_URL}/?cert_id={row['id']}"
         qr = qrcode.make(app_url)
         
-        # ВИПРАВЛЕНО: використання тимчасового файлу з унікальною назвою
         with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
             qr_path = tmp_file.name
             qr.save(qr_path)
         
-        pdf.ln(20)
-        pdf.set_x(20)
-        pdf.set_font(f_main, size=10)
-        pdf.multi_cell(110, 6, "Ви можете перевірити дані з цього документа\nвідсканувавши QR-код")
-        pdf.image(qr_path, x=145, y=pdf.get_y() - 15, w=35)
+        c.setFont(font_name, 10)
+        c.drawString(50, y_pos - 50, "Ви можете перевірити дані з цього документа")
+        c.drawString(50, y_pos - 65, "відсканувавши QR-код")
         
-        # Видалення тимчасового файлу
+        c.drawImage(qr_path, 420, y_pos - 100, width=100, height=100)
+        
         if os.path.exists(qr_path):
             os.remove(qr_path)
     except Exception as e:
         st.warning(f"Не вдалося згенерувати QR-код: {e}")
     
-    return pdf.output(dest='S').encode('latin-1')
+    c.save()
+    buffer.seek(0)
+    
+    # ВИПРАВЛЕНО: Повертаємо bytes напряму, без encode
+    return buffer.read()
 
 # --- ОСНОВНА ЛОГІКА ---
 st.set_page_config(
@@ -281,11 +274,9 @@ st.set_page_config(
 
 apply_custom_design("background.webp")
 
-# ВИПРАВЛЕНО: Безпечне отримання параметрів з URL
 query_params = st.query_params
 default_cert = query_params.get("cert_id", "").strip().upper()
 
-# Валідація параметра з URL
 if default_cert and not validate_cert_id(default_cert):
     st.warning("⚠️ Некоректний формат номера сертифіката в URL")
     default_cert = ""
@@ -293,24 +284,22 @@ if default_cert and not validate_cert_id(default_cert):
 st.markdown('<h1 class="main-title">Верифікація сертифікату</h1>', unsafe_allow_html=True)
 st.markdown('<p class="sub-title">Введіть номер вашого документа</p>', unsafe_allow_html=True)
 
-# Центрування вводу
 col_left, col_mid, col_right = st.columns([1, 2, 1])
 with col_mid:
     cert_id_input = st.text_input(
         "", 
         value=default_cert, 
         placeholder="Наприклад: A0001",
-        max_chars=20
+        max_chars=20,
+        label_visibility="collapsed"
     ).strip().upper()
     
     search_clicked = st.button("ЗНАЙТИ")
     st.markdown('<p class="hint">*Якщо сертифікат не знайдено, спробуйте змінити мову введення</p>', unsafe_allow_html=True)
 
 if (cert_id_input or search_clicked) and cert_id_input:
-    # ВИПРАВЛЕНО: Валідація введення
     if not validate_cert_id(cert_id_input):
         st.error("❌ Некоректний формат номера сертифіката. Використовуйте тільки латинські літери та цифри.")
-    # ВИПРАВЛЕНО: Rate limiting
     elif not rate_limit_check():
         st.error("⏳ Забагато запитів. Будь ласка, зачекайте хвилину.")
     else:
@@ -319,10 +308,8 @@ if (cert_id_input or search_clicked) and cert_id_input:
                 conn = st.connection("gsheets", type=GSheetsConnection)
                 df = conn.read(ttl=300)
                 
-                # ВИПРАВЛЕНО: Безпечна обробка колонок
                 df.columns = df.columns.str.strip().str.lower()
                 
-                # Перевірка наявності необхідних колонок
                 required_cols = ['id', 'name', 'program', 'instructor', 'date']
                 missing_cols = [col for col in required_cols if col not in df.columns]
                 
@@ -336,17 +323,14 @@ if (cert_id_input or search_clicked) and cert_id_input:
                     if not match.empty:
                         row = match.iloc[0].to_dict()
                         
-                        # Санітизація даних
                         safe_name = sanitize_html(row['name'])
                         safe_instructor = sanitize_html(row['instructor'])
                         
                         prog_name = PROGRAMS.get(str(row.get('program')), "Курс першої допомоги")
                         
-                        # ВИПРАВЛЕНО: Використання UTC для консистентності
                         try:
                             date_issued = pd.to_datetime(row['date'], dayfirst=True)
                             expiry_date = date_issued + timedelta(days=3*365)
-                            # Використовуємо UTC для порівняння
                             now_utc = datetime.now()
                             days_left = (expiry_date - now_utc).days
                         except Exception as e:
@@ -355,7 +339,6 @@ if (cert_id_input or search_clicked) and cert_id_input:
                             date_issued = datetime.now()
                             expiry_date = date_issued
                         
-                        # Визначення статусу
                         if days_left < 0:
                             status_class, status_text = "expired", "ТЕРМІН ДІЇ ЗАВЕРШЕНО"
                         elif days_left < 30:
@@ -363,7 +346,6 @@ if (cert_id_input or search_clicked) and cert_id_input:
                         else:
                             status_class, status_text = "active", "АКТИВНИЙ"
 
-                        # ВИПРАВЛЕНО: Безпечний вивід HTML з санітизацією
                         st.markdown(f'''
                         <div class="result-card">
                             <div class="result-content">
@@ -387,7 +369,6 @@ if (cert_id_input or search_clicked) and cert_id_input:
                         </div>
                         ''', unsafe_allow_html=True)
 
-                        # Додаткові повідомлення та дії
                         if status_class in ["warning", "expired"]:
                             st.warning(f"⚠️ Термін дії вашого сертифікату {status_text.lower()}. Пропонуємо оновити знання!")
                             st.link_button("ЗАРЕЄСТРУВАТИСЬ НА ТРЕНІНГ", "https://your-site.com/courses")
@@ -399,7 +380,8 @@ if (cert_id_input or search_clicked) and cert_id_input:
                                     "📥 ЗАВАНТАЖИТИ PDF ПІДТВЕРДЖЕННЯ", 
                                     pdf_data, 
                                     f"Confirm_{cert_id_input}.pdf", 
-                                    "application/pdf"
+                                    "application/pdf",
+                                    use_container_width=False
                                 )
                             except Exception as e:
                                 st.error(f"❌ Помилка генерації PDF: {e}")
