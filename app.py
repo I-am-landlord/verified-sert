@@ -35,14 +35,17 @@ def apply_style(webp_file):
     }}
     .main-title {{ font-size: 48px; font-weight: 800; color: #1a1a1a; text-align: center; margin-top: 30px; }}
     .sub-title {{ font-size: 18px; color: #1a1a1a; text-align: center; margin-bottom: 30px; opacity: 0.8; }}
+    
     div[data-baseweb="input"] {{ background-color: white !important; border: 2.5px solid #1a1a1a !important; border-radius: 16px !important; }}
     input {{ color: #1a1a1a !important; font-size: 20px !important; text-align: center !important; }}
+    
     .stButton {{ display: flex; justify-content: center; }}
     .stButton > button {{
         background-color: #1a1a1a !important; color: white !important;
         padding: 15px 80px !important; border-radius: 50px !important;
         font-weight: 800 !important; border: 2.5px solid #1a1a1a !important;
     }}
+    
     .result-card {{
         background: #ffffff; width: 100%; max-width: 850px; border-radius: 30px;
         border: 1px solid #e0e0e0; box-shadow: 0 20px 50px rgba(0,0,0,0.05);
@@ -51,44 +54,22 @@ def apply_style(webp_file):
     }}
     .label {{ color: #888; font-size: 11px; font-weight: 700; text-transform: uppercase; }}
     .value {{ font-size: 18px; font-weight: 600; margin-bottom: 20px; color: #1a1a1a; }}
+    
     .st-green {{ color: #2ecc71 !important; font-weight: 800; }}
     .st-yellow {{ color: #f1c40f !important; font-weight: 800; }}
     .st-red {{ color: #e74c3c !important; font-weight: 800; }}
-    .promo-card {{
-        grid-column: span 2; position: relative; height: 160px; border-radius: 20px;
-        overflow: hidden; border: 1px solid #1a1a1a; margin-top: 10px; text-decoration: none !important;
-        display: block;
-    }}
-    .promo-bg {{
-        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        background-size: cover; background-position: center;
-        filter: brightness(0.3) grayscale(1); transition: 0.5s;
-    }}
-    .promo-card:hover .promo-bg {{ filter: brightness(0.8) grayscale(0); }}
-    .promo-text {{ position: relative; z-index: 2; color: white; text-align: center; padding: 40px 20px; }}
+    
     .social-icon {{ width: 35px; margin: 0 10px; cursor: pointer; }}
     </style>
     """, unsafe_allow_html=True)
 
-# --- ЛОГІКА РЕКЛАМИ ---
-def get_promo(p_id, is_expired):
-    imgs = {
-        "h": "https://images.unsplash.com/photo-1516589091380-5d8e87df6999?auto=format&fit=crop&w=800",
-        "p": "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?auto=format&fit=crop&w=800"
-    }
-    if is_expired:
-        return {"t": "ПОНОВІТЬ СЕРТИФІКАТ", "d": "Термін дії вичерпано. Знижка на повторний курс!", "img": imgs['h'], "url": "#"}
-    if p_id == "4":
-        return {"t": "КУРСИ ДЛЯ ЛЮДЕЙ", "d": "Опануйте допомогу для людей!", "img": imgs['h'], "url": "#"}
-    return {"t": "ДОПОМОГА ТВАРИНАМ", "d": "Ви вже рятуєте людей. Навчіться допомагати і тваринам!", "img": imgs['p'], "url": "#"}
-
-# --- ОСНОВНИЙ ДОДАТОК ---
+# --- ДОДАТОК ---
 apply_style(BG_IMAGE)
 
 st.markdown('<h1 class="main-title">Верифікація сертифікату</h1>', unsafe_allow_html=True)
 st.markdown('<p class="sub-title">Введіть номер документа для перевірки</p>', unsafe_allow_html=True)
 
-# Отримання ID з URL або вводу
+# Отримання ID
 query_params = st.query_params
 default_id = query_params.get("cert_id", "")
 if isinstance(default_id, list): default_id = default_id[0]
@@ -96,7 +77,7 @@ default_id = re.sub(r'[^a-zA-Z0-9]', '', str(default_id)).upper()
 
 _, col_in, _ = st.columns([1, 2, 1])
 with col_in:
-    cert_input = st.text_input("ID", value=default_id, label_visibility="collapsed", placeholder="CERT12345").strip().upper()
+    cert_input = st.text_input("ID", value=default_id, label_visibility="collapsed", placeholder="Введіть номер...").strip().upper()
     search_btn = st.button("ЗНАЙТИ")
 
 final_id = cert_input if cert_input else default_id
@@ -119,9 +100,8 @@ if final_id:
             d_iss = pd.to_datetime(row['date'], dayfirst=True)
             d_exp = d_iss + timedelta(days=1095)
             days_left = (d_exp - datetime.now()).days
-            is_expired = days_left < 0
 
-            if is_expired:
+            if days_left < 0:
                 cls, txt = "st-red", "ТЕРМІН ДІЇ ЗАВЕРШЕНО"
             elif days_left <= 30:
                 cls, txt = "st-yellow", "ПІДХОДИТЬ ДО КІНЦЯ"
@@ -135,9 +115,7 @@ if final_id:
             qr.save(buf, format="PNG")
             qr_b64 = base64.b64encode(buf.getvalue()).decode()
 
-            promo = get_promo(p_id, is_expired)
-
-            # ВІЗУАЛЬНИЙ ВИВІД КАРТКИ
+            # ВІЗУАЛЬНИЙ ВИВІД
             st.markdown(f"""
             <div class="result-card">
                 <div>
@@ -151,22 +129,14 @@ if final_id:
                     <div class="label">Залишилось днів</div><div class="value {cls}">{max(0, days_left)}</div>
                 </div>
                 
-                <a href="{promo['url']}" class="promo-card">
-                    <div class="promo-bg" style="background-image: url('{promo['img']}');"></div>
-                    <div class="promo-text">
-                        <div style="font-weight:800; font-size:18px;">{promo['t']}</div>
-                        <div style="font-size:13px; opacity:0.9;">{promo['d']}</div>
-                    </div>
-                </a>
-
-                <div style="grid-column: span 2; border-top: 1px solid #eee; padding-top: 20px; display: flex; justify-content: space-between; align-items: center;">
-                    <div class="{cls}" style="font-size: 18px;">● {txt}</div>
-                    <img src="data:image/png;base64,{qr_b64}" width="80">
+                <div style="grid-column: span 2; border-top: 1px solid #eee; padding-top: 30px; display: flex; justify-content: space-between; align-items: center;">
+                    <div class="{cls}" style="font-size: 20px;">● {txt}</div>
+                    <img src="data:image/png;base64,{qr_b64}" width="90">
                 </div>
             </div>
 
             <div style="text-align: center; margin-top: 20px;">
-                <p style="color:#000; font-weight:bold; font-size:12px; margin-bottom:10px;">ПОДІЛИТИСЯ РЕЗУЛЬТАТОМ:</p>
+                <p style="color:#888; font-weight:bold; font-size:12px; margin-bottom:10px;">ПОДІЛИТИСЯ РЕЗУЛЬТАТОМ:</p>
                 <a href="https://t.me/share/url?url={share_url}" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111646.png" class="social-icon"></a>
                 <a href="viber://forward?text={share_url}" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/3670/3670059.png" class="social-icon"></a>
             </div>
