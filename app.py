@@ -31,8 +31,7 @@ def apply_style(webp_file):
     [data-testid="stAppViewContainer"] {{
         background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 600px), 
                     url("data:image/webp;base64,{bin_str}");
-        background-size: 100% 600px, cover;
-        background-attachment: fixed;
+        background-size: 100% 600px, cover; background-attachment: fixed;
     }}
     .main-title {{ font-size: 48px; font-weight: 800; color: #1a1a1a; text-align: center; margin-top: 30px; }}
     .sub-title {{ font-size: 18px; color: #1a1a1a; text-align: center; margin-bottom: 30px; opacity: 0.8; }}
@@ -52,12 +51,13 @@ def apply_style(webp_file):
     }}
     .label {{ color: #888; font-size: 11px; font-weight: 700; text-transform: uppercase; }}
     .value {{ font-size: 18px; font-weight: 600; margin-bottom: 20px; color: #1a1a1a; }}
-    .st-green {{ color: #2ecc71 !important; }}
-    .st-yellow {{ color: #f1c40f !important; }}
-    .st-red {{ color: #e74c3c !important; }}
+    .st-green {{ color: #2ecc71 !important; font-weight: 800; }}
+    .st-yellow {{ color: #f1c40f !important; font-weight: 800; }}
+    .st-red {{ color: #e74c3c !important; font-weight: 800; }}
     .promo-card {{
         grid-column: span 2; position: relative; height: 160px; border-radius: 20px;
         overflow: hidden; border: 1px solid #1a1a1a; margin-top: 10px; text-decoration: none !important;
+        display: block;
     }}
     .promo-bg {{
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -77,17 +77,18 @@ def get_promo(p_id, is_expired):
         "p": "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?auto=format&fit=crop&w=800"
     }
     if is_expired:
-        return {"t": "ПОНОВІТЬ СЕРТИФІКАТ", "d": "Ваш термін дії вичерпано. Отримайте знижку на повторний курс!", "img": imgs['h'], "url": "#"}
-    if p_id in ["1", "2", "3"]:
-        return {"t": "ДОПОМОГА ТВАРИНАМ", "d": "Ви вже вмієте рятувати людей. Навчіться допомагати і тваринам!", "img": imgs['p'], "url": "#"}
-    return {"t": "КУРСИ ДЛЯ ЛЮДЕЙ", "d": "Опануйте домедичну допомогу для людей!", "img": imgs['h'], "url": "#"}
+        return {"t": "ПОНОВІТЬ СЕРТИФІКАТ", "d": "Термін дії вичерпано. Знижка на повторний курс!", "img": imgs['h'], "url": "#"}
+    if p_id == "4":
+        return {"t": "КУРСИ ДЛЯ ЛЮДЕЙ", "d": "Опануйте допомогу для людей!", "img": imgs['h'], "url": "#"}
+    return {"t": "ДОПОМОГА ТВАРИНАМ", "d": "Ви вже рятуєте людей. Навчіться допомагати і тваринам!", "img": imgs['p'], "url": "#"}
 
+# --- ОСНОВНИЙ ДОДАТОК ---
 apply_style(BG_IMAGE)
 
 st.markdown('<h1 class="main-title">Верифікація сертифікату</h1>', unsafe_allow_html=True)
-st.markdown('<p class="sub-title">Введіть номер вашого документа для перевірки</p>', unsafe_allow_html=True)
+st.markdown('<p class="sub-title">Введіть номер документа для перевірки</p>', unsafe_allow_html=True)
 
-# ID з URL
+# Отримання ID з URL або вводу
 query_params = st.query_params
 default_id = query_params.get("cert_id", "")
 if isinstance(default_id, list): default_id = default_id[0]
@@ -95,7 +96,7 @@ default_id = re.sub(r'[^a-zA-Z0-9]', '', str(default_id)).upper()
 
 _, col_in, _ = st.columns([1, 2, 1])
 with col_in:
-    cert_input = st.text_input("ID", value=default_id, label_visibility="collapsed", placeholder="Наприклад: 12345ABC").strip().upper()
+    cert_input = st.text_input("ID", value=default_id, label_visibility="collapsed", placeholder="CERT12345").strip().upper()
     search_btn = st.button("ЗНАЙТИ")
 
 final_id = cert_input if cert_input else default_id
@@ -112,9 +113,9 @@ if final_id:
         if not match.empty:
             row = match.iloc[0]
             p_id = str(row['program']).split('.')[0].strip()
-            p_name = PROGRAMS.get(p_id, f"Курс №{p_id}")
+            p_name = PROGRAMS.get(p_id, f"Спецкурс №{p_id}")
             
-            # Дати та Статус
+            # Розрахунок термінів
             d_iss = pd.to_datetime(row['date'], dayfirst=True)
             d_exp = d_iss + timedelta(days=1095)
             days_left = (d_exp - datetime.now()).days
@@ -127,15 +128,16 @@ if final_id:
             else:
                 cls, txt = "st-green", "АКТИВНИЙ"
 
+            # QR Код
             share_url = f"https://verified-sert-xyrgwme8tqwwxtpwwzmsn5.streamlit.app/?cert_id={final_id}"
             qr = qrcode.make(share_url)
             buf = BytesIO()
             qr.save(buf, format="PNG")
             qr_b64 = base64.b64encode(buf.getvalue()).decode()
 
-            promo = get_promo(p_id, days_left < 0)
+            promo = get_promo(p_id, is_expired)
 
-            # --- ЄДИНИЙ БЛОК ВИВОДУ (ФІКС) ---
+            # ВІЗУАЛЬНИЙ ВИВІД КАРТКИ
             st.markdown(f"""
             <div class="result-card">
                 <div>
@@ -158,7 +160,7 @@ if final_id:
                 </a>
 
                 <div style="grid-column: span 2; border-top: 1px solid #eee; padding-top: 20px; display: flex; justify-content: space-between; align-items: center;">
-                    <div style="font-size: 18px; font-weight: 800;" class="{cls}">● {txt}</div>
+                    <div class="{cls}" style="font-size: 18px;">● {txt}</div>
                     <img src="data:image/png;base64,{qr_b64}" width="80">
                 </div>
             </div>
@@ -167,9 +169,11 @@ if final_id:
                 <p style="color:#000; font-weight:bold; font-size:12px; margin-bottom:10px;">ПОДІЛИТИСЯ РЕЗУЛЬТАТОМ:</p>
                 <a href="https://t.me/share/url?url={share_url}" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111646.png" class="social-icon"></a>
                 <a href="viber://forward?text={share_url}" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/3670/3670059.png" class="social-icon"></a>
-                <a href="https://api.whatsapp.com/send?text={share_url}" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/733/733585.png" class="social-icon"></a>
             </div>
             """, unsafe_allow_html=True)
-
+            
         else:
             st.error(f"Сертифікат №{final_id} не знайдено.")
+            
+    except Exception as e:
+        st.error(f"Помилка з'єднання з таблицею: {e}")
