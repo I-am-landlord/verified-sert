@@ -21,7 +21,7 @@ PROGRAMS = {
     "4": "Тренінг з першої допомоги домашнім тваринам"
 }
 
-st.set_page_config(page_title="Verify Center", layout="wide")
+st.set_page_config(page_title="Верифікаця сертифікату", layout="wide")
 
 # ---------------- FORCE LIGHT THEME ----------------
 st.markdown("""
@@ -54,22 +54,70 @@ def apply_style(webp_file):
 
     st.markdown(f"""
     <style>
+    html, body {{
+        background: #fff !important;
+        color-scheme: light !important;
+    }}
+
+    /* ROOT */
     [data-testid="stAppViewContainer"] {{
-        background:
-            linear-gradient(to bottom, rgba(255,255,255,0) 0%, #fff 600px),
+        position: relative;
+        overflow-x: hidden;
+        background: transparent;
+    }}
+
+    /* PARALLAX BACKGROUND LAYER */
+    #parallax-bg {{
+        position: fixed;
+        inset: -10%;
+        z-index: -3;
+        background-image:
+            linear-gradient(to bottom,
+                rgba(255,255,255,0.0) 0%,
+                rgba(255,255,255,0.2) 30%,
+                rgba(255,255,255,0.6) 55%,
+                rgba(255,255,255,0.95) 75%),
             url("data:image/webp;base64,{bin_str}");
-        background-size: 100% 600px, cover;
-        background-attachment: fixed;
+        background-size: cover;
+        background-position: center top;
+        will-change: transform;
+        transform: translateY(0px) scale(1.05);
     }}
 
-    /* Hide honeypot fully */
-    input[name="hp"] {{
-        display:none !important;
-        opacity:0 !important;
-        height:0 !important;
-        pointer-events:none !important;
+    /* ANIMATED LIGHT GLOW */
+    #light-overlay {{
+        position: fixed;
+        inset: 0;
+        z-index: -2;
+        background:
+            radial-gradient(circle at 20% 10%, rgba(255,255,255,0.35), transparent 60%),
+            radial-gradient(circle at 80% 30%, rgba(255,255,255,0.25), transparent 65%);
+        animation: floatLights 14s ease-in-out infinite alternate;
+        pointer-events: none;
     }}
 
+    @keyframes floatLights {{
+        0%   {{ background-position: 0% 0%, 100% 0%; }}
+        100% {{ background-position: 20% 10%, 80% 20%; }}
+    }}
+
+    /* GRAIN / NOISE */
+    #noise {{
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+        opacity: 0.4;
+        animation: noiseMove 0.3s infinite alternate;
+    }}
+
+    @keyframes noiseMove {{
+        from {{ transform: translate(0,0); }}
+        to   {{ transform: translate(-1%,1%); }}
+    }}
+
+    /* UI ELEMENTS */
     .main-title {{
         font-size: 46px;
         font-weight: 800;
@@ -87,8 +135,8 @@ def apply_style(webp_file):
     div[data-baseweb="input"] {{
         border-radius: 20px !important;
         border: 2px solid #111 !important;
-        background: rgba(255,255,255,0.75) !important;
-        backdrop-filter: blur(8px);
+        background: rgba(255,255,255,0.6) !important;
+        backdrop-filter: blur(14px) saturate(180%);
     }}
 
     input {{
@@ -106,19 +154,31 @@ def apply_style(webp_file):
         border: none;
         box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     }}
-    </style>
-    """, unsafe_allow_html=True)
 
-apply_style(BG_IMAGE)
+    /* MOBILE OPTIMIZATION */
+    @media (max-width: 768px) {{
+        #parallax-bg {{ transform: none !important; }}
+    }}
+    </style>
+
+    <div id="parallax-bg"></div>
+    <div id="light-overlay"></div>
+    <div id="noise"></div>
+
+    <script>
+    const bg = document.getElementById("parallax-bg");
+
+    window.addEventListener("scroll", () => {{
+        const scrolled = window.scrollY;
+        bg.style.transform = `translateY(${scrolled * 0.25}px) scale(1.05)`;
+    }});
+    </script>
+    """, unsafe_allow_html=True)
 
 # ---------------- UI ----------------
 st.markdown('<div class="main-title">Верифікація сертифікату</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-title">Введіть номер документа для перевірки</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub-title">Введіть номер сертифікату для перевірки</div>', unsafe_allow_html=True)
 
-# Hidden honeypot
-bot_trap = st.text_input("", key="hp", label_visibility="collapsed")
-if bot_trap:
-    st.stop()
 
 # URL param
 query_params = st.query_params
@@ -130,8 +190,8 @@ default_id = re.sub(r'[^A-Z0-9]', '', str(default_id).upper())
 
 _, col, _ = st.columns([1, 2, 1])
 with col:
-    cert_input = st.text_input("", value=default_id, placeholder="ВВЕДІТЬ НОМЕР...")
-    st.button("ЗНАЙТИ")
+    cert_input = st.text_input("", value=default_id, placeholder="Введіть номер...")
+    st.button("Перевірити")
 
 final_id = cert_input.strip().upper()
 
@@ -175,13 +235,13 @@ if final_id:
         days_left = (d_exp - datetime.now()).days
 
         if days_left < 0:
-            color, txt = "#e74c3c", "ТЕРМІН ЗАВЕРШЕНО"
+            color, txt = "#e74c3c", "Термін дії завершено"
         elif days_left <= 30:
-            color, txt = "#f1c40f", "ПІДХОДИТЬ ДО КІНЦЯ"
+            color, txt = "#f1c40f", "Термін дії підходить до завершення"
         else:
-            color, txt = "#2ecc71", "АКТИВНИЙ"
+            color, txt = "#2ecc71", "Активний"
 
-        share_url = f"https://your-app.streamlit.app/?cert_id={final_id}"
+        share_url = f"https://verified-sert-xyrgwme8tqwwxtpwwzmsn5.streamlit.app/?cert_id={final_id}"
         qr = qrcode.make(share_url)
         buf = BytesIO()
         qr.save(buf, format="PNG")
@@ -202,24 +262,24 @@ if final_id:
         ">
             <div style="display:grid;grid-template-columns:1.2fr .8fr;gap:30px;">
                 <div>
-                    <div style="opacity:.5;font-size:12px;">УЧАСНИК</div>
+                    <div style="opacity:.5;font-size:12px;">Учасник</div>
                     <div style="font-size:22px;font-weight:700;">{name}</div><br>
 
-                    <div style="opacity:.5;font-size:12px;">ПРОГРАМА</div>
+                    <div style="opacity:.5;font-size:12px;">Програма</div>
                     <div style="font-weight:600;">{p_name}</div><br>
 
-                    <div style="opacity:.5;font-size:12px;">ІНСТРУКТОР</div>
+                    <div style="opacity:.5;font-size:12px;">Інструктори</div>
                     <div style="font-weight:600;">{instructor}</div>
                 </div>
 
                 <div>
-                    <div style="opacity:.5;font-size:12px;">ВИДАНО</div>
+                    <div style="opacity:.5;font-size:12px;">Дата видачі</div>
                     <div>{d_iss.strftime('%d.%m.%Y')}</div><br>
 
-                    <div style="opacity:.5;font-size:12px;">ДІЙСНИЙ ДО</div>
+                    <div style="opacity:.5;font-size:12px;">Дійсний до</div>
                     <div>{d_exp.strftime('%d.%m.%Y')}</div><br>
 
-                    <div style="opacity:.5;font-size:12px;">ЗАЛИШИЛОСЬ</div>
+                    <div style="opacity:.5;font-size:12px;">Залишилось</div>
                     <div style="font-size:22px;font-weight:800;">{max(0, days_left)}</div>
                 </div>
             </div>
