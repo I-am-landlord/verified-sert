@@ -138,8 +138,13 @@ st.markdown('<div class="sub-title">Введіть номер сертифіка
 
 
 # URL param
-query_params = st.experimental_get_query_params()
+query_params = st.query_params
 default_id = query_params.get("cert_id", [""])[0]
+if isinstance(default_id, list):
+default_id = default_id[0]
+
+
+default_id = re.sub(r'[^A-Z0-9]', '', str(default_id).upper())
 if isinstance(default_id, list):
     default_id = default_id[0]
 
