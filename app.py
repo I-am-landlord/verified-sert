@@ -218,106 +218,107 @@ if final_id:
         qr_b64 = base64.b64encode(buf.getvalue()).decode()
 
         # ----------- GLASS CARD -----------
-        components.html(f"""
-        <style>
-            body {
-                margin: 0;
-                padding: 0;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-            }
-            /* ===== GLASS CARD ===== */
-            .glass-card {
-                max-width:900px;
-                width:100%;
-                margin:40px auto;
-                background: rgba(255,255,255,0.35);
-                backdrop-filter: blur(20px) saturate(180%);
-                border-radius:32px;
-                padding:40px;
-                box-shadow: 0 20px 60px rgba(0,0,0,0.08);
-                color:#111;
-                font-family: 'DejaVu', Arial, sans-serif;
-                animation: fadeUp 0.8s ease forwards;
-            }
-            @keyframes fadeUp {from {opacity:0; transform:translateY(20px);} to {opacity:1; transform:translateY(0);}}
-            .glass-grid {display:grid; grid-template-columns:1.2fr .8fr; gap:30px;}
-            .label {opacity:0.6; font-size:13px; font-weight:500; margin-bottom:4px;}
-            .value {font-size:22px; font-weight:700; margin-bottom:15px; color:#111;}
-            .small {font-size:18px; font-weight:600; color:#111; margin-bottom:12px;}
-            .status {font-weight:800; font-size:16px;}
-            
-            /* ===== MOBILE RESPONSIVE ===== */
-            @media(max-width:768px) {
-                .glass-grid {
-                    grid-template-columns:1fr !important;
-                    gap: 20px;
-                }
-                .glass-card {
-                    padding: 30px !important;
-                    margin: 20px 10px !important;
-                    border-radius: 24px !important;
-                }
-                .value {
-                    font-size: 20px !important;
-                    margin-bottom: 12px !important;
-                }
-                .small {
-                    font-size: 16px !important;
-                    margin-bottom: 10px !important;
-                }
-                .status {
-                    font-size: 14px !important;
-                }
-            }
-            
-            @media(max-width:480px) {
-                .glass-card {
-                    padding: 20px !important;
-                    margin: 15px 5px !important;
-                    border-radius: 20px !important;
-                }
-                .value {
-                    font-size: 18px !important;
-                    margin-bottom: 10px !important;
-                }
-                .small {
-                    font-size: 15px !important;
-                    margin-bottom: 8px !important;
-                }
-                .label {
-                    font-size: 12px !important;
-                }
-                .status {
-                    font-size: 13px !important;
-                }
-        </style>
-        <div class="glass-card">
-            <div class="glass-grid">
-                <div>
-                    <div class="label">Учасник</div>
-                    <div class="value">{name}</div>
-                    <div class="label">Програма</div>
-                    <div class="small">{p_name}</div>
-                    <div class="label">Інструктори</div>
-                    <div class="small">{instructor}</div>
-                </div>
-                <div>
-                    <div class="label">Дата видачі</div>
-                    <div class="value">{d_iss.strftime('%d.%m.%Y')}</div>
-                    <div class="label">Дійсний до</div>
-                    <div class="value">{d_exp.strftime('%d.%m.%Y')}</div>
-                    <div class="label">Залишилось</div>
-                    <div class="value">{max(0,days_left)} днів</div>
-                </div>
-            </div>
-            <div style="margin-top:20px; border-top:1px solid #eee; padding-top:15px; display:flex; justify-content:space-between; align-items:center;">
-                <div class="status" style="color:{color};">● {txt}</div>
-                <img src="data:image/png;base64,{qr_b64}" width="90" style="border-radius:14px; border:1px solid #eee;">
-            </div>
+       components.html(f"""
+<style>
+body {{
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}}
+/* ===== GLASS CARD ===== */
+.glass-card {{
+    max-width:900px;
+    width:100%;
+    margin:40px auto;
+    background: rgba(255,255,255,0.35);
+    backdrop-filter: blur(20px) saturate(180%);
+    border-radius:32px;
+    padding:40px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.08);
+    color:#111;
+    font-family: 'DejaVu', Arial, sans-serif;
+    animation: fadeUp 0.8s ease forwards;
+}}
+@keyframes fadeUp {{from {{opacity:0; transform:translateY(20px);}} to {{opacity:1; transform:translateY(0);}}}}
+.glass-grid {{display:grid; grid-template-columns:1.2fr .8fr; gap:30px;}}
+.label {{opacity:0.6; font-size:13px; font-weight:500; margin-bottom:4px;}}
+.value {{font-size:22px; font-weight:700; margin-bottom:15px; color:#111;}}
+.small {{font-size:18px; font-weight:600; color:#111; margin-bottom:12px;}}
+.status {{font-weight:800; font-size:16px;}}
+
+/* ===== MOBILE RESPONSIVE ===== */
+@media(max-width:768px) {{
+    .glass-grid {{
+        grid-template-columns:1fr !important;
+        gap: 20px;
+    }}
+    .glass-card {{
+        padding: 30px !important;
+        margin: 20px 10px !important;
+        border-radius: 24px !important;
+    }}
+    .value {{
+        font-size: 20px !important;
+        margin-bottom: 12px !important;
+    }}
+    .small {{
+        font-size: 16px !important;
+        margin-bottom: 10px !important;
+    }}
+    .status {{
+        font-size: 14px !important;
+    }}
+}}
+
+@media(max-width:480px) {{
+    .glass-card {{
+        padding: 20px !important;
+        margin: 15px 5px !important;
+        border-radius: 20px !important;
+    }}
+    .value {{
+        font-size: 18px !important;
+        margin-bottom: 10px !important;
+    }}
+    .small {{
+        font-size: 15px !important;
+        margin-bottom: 8px !important;
+    }}
+    .label {{
+        font-size: 12px !important;
+    }}
+    .status {{
+        font-size: 13px !important;
+    }}
+}}
+</style>
+<div class="glass-card">
+    <div class="glass-grid">
+        <div>
+            <div class="label">Учасник</div>
+            <div class="value">{name}</div>
+            <div class="label">Програма</div>
+            <div class="small">{p_name}</div>
+            <div class="label">Інструктори</div>
+            <div class="small">{instructor}</div>
         </div>
-        """, height=560)
+        <div>
+            <div class="label">Дата видачі</div>
+            <div class="value">{d_iss.strftime('%d.%m.%Y')}</div>
+            <div class="label">Дійсний до</div>
+            <div class="value">{d_exp.strftime('%d.%m.%Y')}</div>
+            <div class="label">Залишилось</div>
+            <div class="value">{max(0,days_left)} днів</div>
+        </div>
+    </div>
+    <div style="margin-top:20px; border-top:1px solid #eee; padding-top:15px; display:flex; justify-content:space-between; align-items:center;">
+        <div class="status" style="color:{color};">● {txt}</div>
+        <img src="data:image/png;base64,{qr_b64}" width="90" style="border-radius:14px; border:1px solid #eee;">
+    </div>
+</div>
+""", height=560)
 
     except Exception as e:
         st.markdown('<div class="center-error">Внутрішня помилка сервера</div>', unsafe_allow_html=True)
