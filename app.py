@@ -243,21 +243,21 @@ if final_id:
         .status {{font-weight:800; font-size:16px;}}
         @media(max-width:768px){
             .glass-grid {grid-template-columns:1fr !important;}
-                .glass-card {
+            .glass-card {
                     padding: 25px !important;
                     margin: 20px auto !important;
                     }
-                .value {font-size: 20px !important;}
-                .small {font-size: 16px !important;}
+            .value {font-size: 20px !important;}
+            .small {font-size: 16px !important;}
                     }
 
-            @media(max-width:480px){
-                .glass-card {
+        @media(max-width:480px){
+            .glass-card {
                 padding: 20px !important;
                 margin: 10px auto !important;
             }
-                .value {font-size: 18px !important;}
-                .small {font-size: 15px !important;}
+            .value {font-size: 18px !important;}
+            .small {font-size: 15px !important;}
             }
         </style>
         <div class="glass-card">
