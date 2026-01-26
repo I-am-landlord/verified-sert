@@ -79,6 +79,21 @@ input:focus {border:1px solid #000 !important; box-shadow:0 0 0 2px rgba(0,0,0,0
     margin: 0 auto; /* по центру */
     }
 }
+
+.center-error {
+    display: inline-block;
+    background: rgba(255, 100, 100, 0.15);
+    backdrop-filter: blur(6px);
+    border-radius: 12px;
+    padding: 10px 15px; /* ширина трохи більше за текст */
+    font-size: 16px;
+    font-weight: 600;
+    color: #e74c3c;
+    text-align: center;
+    margin: 20px auto; /* вертикальний відступ і центрування */
+}
+
+""", unsafe_allow_html=True)
 .stButton>button:hover {transform: translateY(-1px); box-shadow:0 10px 25px rgba(0,0,0,0.2);}
 </style>
 """, unsafe_allow_html=True)
@@ -217,7 +232,7 @@ if final_id:
                     <div class="value">{d_exp.strftime('%d.%m.%Y')}</div>
 
                     <div class="label">Залишилось</div>
-                    <div class="value">{max(0, days_left)}</div>
+                    <div class="value">{max(0, days_left)} днів</div>
                 </div>
             </div>
             <div style="margin-top:20px;border-top:1px solid #eee;padding-top:15px;display:flex;justify-content:space-between;">
