@@ -18,7 +18,7 @@ PROGRAMS = {
     "4": "Тренінг з першої допомоги домашнім тваринам"
 }
 
-st.set_page_config(page_title="Верифікація сертифікату", layout="wide")
+st.set_page_config(page_title="Верифікація сертифікату", layout="centered")
 
 # ---------------- GLOBAL STYLES ----------------
 st.markdown("""
@@ -47,9 +47,10 @@ html, body, [class*="st-"] {
 
 /* ===== MAIN CONTAINER CENTERING ===== */
 .main .block-container {
-    max-width: 1200px;
-    padding-top: 2rem;
-    padding-bottom: 2rem;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding-left: 2rem;
+    padding-right: 2rem;
 }
 
 /* ===== HEADERS ===== */
@@ -84,7 +85,7 @@ input:focus {border:1px solid #000 !important; box-shadow:0 0 0 2px rgba(0,0,0,0
 
 /* ===== ERROR CENTERED ===== */
 .center-error {
-    display:inline-block;
+    display:block;
     background: rgba(255,100,100,0.15);
     backdrop-filter: blur(8px);
     border-radius:12px;
@@ -94,6 +95,7 @@ input:focus {border:1px solid #000 !important; box-shadow:0 0 0 2px rgba(0,0,0,0
     color:#e74c3c;
     text-align:center;
     margin:20px auto;
+    max-width: 500px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -172,6 +174,13 @@ if final_id:
         # ----------- GLASS CARD -----------
         components.html(f"""
         <style>
+        body {{
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }}
         /* ===== GLASS CARD ===== */
         .glass-card {{
             max-width:900px;
