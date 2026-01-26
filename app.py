@@ -186,7 +186,67 @@ if final_id:
         qr_b64 = base64.b64encode(buf.getvalue()).decode()
 
         # ---------------- GLASS CARD ----------------
-        components.html(f"""
+        components.html
+        # ---------------- GLASS CARD ----------------
+components.html(f"""
+                <div style="
+                    max-width:860px;
+                    margin:30px auto;
+                    background: rgba(255,255,255,0.4);
+                    backdrop-filter: blur(16px) saturate(180%);
+                    border-radius:32px;
+                    padding:32px;
+                    box-shadow:0 40px 120px rgba(0,0,0,0.08);
+                    animation:fadeUp 0.6s ease forwards;
+                    font-family:system-ui;
+                    color:#111;
+                ">
+                    <style>
+                        @keyframes fadeUp {{
+                            from {{opacity:0; transform:translateY(10px);}}
+                            to {{opacity:1; transform:translateY(0);}}
+                        }}
+                        .grid {{
+                            display:grid;
+                            grid-template-columns:1.2fr .8fr;
+                            gap:30px;
+                        }}
+                        @media(max-width:768px){{
+                            .grid {{grid-template-columns:1fr !important;}}
+                        }}
+                        .label {{opacity:0.5; font-size:12px;}}
+                        .value {{font-size:22px; font-weight:700; margin-bottom:12px; color:#111;}}
+                        .small {{font-weight:600; font-size:16px; color:#111;}}
+                    </style>
+                    <div class="grid">
+                        <div>
+                            <div class="label">Учасник</div>
+                            <div class="value">{name}</div>
+                
+                            <div class="label">Програма</div>
+                            <div class="small">{p_name}</div>
+                
+                            <div class="label">Інструктори</div>
+                            <div class="small">{instructor}</div>
+                        </div>
+                        <div>
+                            <div class="label">Дата видачі</div>
+                            <div class="value">{d_iss.strftime('%d.%m.%Y')}</div>
+                
+                            <div class="label">Дійсний до</div>
+                            <div class="value">{d_exp.strftime('%d.%m.%Y')}</div>
+                
+                            <div class="label">Залишилось</div>
+                            <div class="value">{max(0, days_left)}</div>
+                        </div>
+                    </div>
+                    <div style="margin-top:20px;border-top:1px solid #eee;padding-top:15px;display:flex;justify-content:space-between;">
+                        <div style="font-weight:800;color:{color};">● {txt}</div>
+                        <img src="data:image/png;base64,{qr_b64}" width="90" style="border-radius:14px;border:1px solid #eee;">
+                    </div>
+                </div>
+                """, height=520)
+    (f"""
         <div class="glass-card">
             <div class="grid">
                 <div>
