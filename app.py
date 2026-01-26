@@ -55,7 +55,7 @@ html, body, [class*="st-"] {
 }
 
 /* ===== HEADERS ===== */
-.main-title {font-size:42px; font-weight:800; color:#222; text-align:center; margin-bottom:10px;}
+.main-title {font-size:42px; font-weight:800; color:#222; text-align:center; margin-bottom:10px; margin-top:30%}
 .sub-title {font-size:18px; font-weight:500; color:#333; text-align:center; margin-bottom:30px;}
 
 /* ===== INPUT ===== */
