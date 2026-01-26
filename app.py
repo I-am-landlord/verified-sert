@@ -6,6 +6,7 @@ import os
 import re
 import base64
 import time
+import html
 from io import BytesIO
 from datetime import datetime, timedelta
 import streamlit.components.v1 as components
@@ -22,7 +23,17 @@ PROGRAMS = {
 
 st.set_page_config(page_title="Verify Center", layout="wide")
 
-# ---------------- Protection ----------------
+# ---------------- FORCE LIGHT THEME ----------------
+st.markdown("""
+<style>
+html, body, [class*="css"] {
+    color-scheme: light !important;
+    background-color: #ffffff !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# ---------------- PROTECTION ----------------
 if "attempts" not in st.session_state:
     st.session_state.attempts = 0
 if "blocked_until" not in st.session_state:
@@ -34,7 +45,7 @@ if now < st.session_state.blocked_until:
     st.error(f"Забагато спроб. Спробуйте через {wait} сек.")
     st.stop()
 
-# ---------------- Style ----------------
+# ---------------- STYLE ----------------
 def apply_style(webp_file):
     bin_str = ""
     if os.path.exists(webp_file):
@@ -44,10 +55,19 @@ def apply_style(webp_file):
     st.markdown(f"""
     <style>
     [data-testid="stAppViewContainer"] {{
-        background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 600px),
-                    url("data:image/webp;base64,{bin_str}");
+        background:
+            linear-gradient(to bottom, rgba(255,255,255,0) 0%, #fff 600px),
+            url("data:image/webp;base64,{bin_str}");
         background-size: 100% 600px, cover;
         background-attachment: fixed;
+    }}
+
+    /* Hide honeypot fully */
+    input[name="hp"] {{
+        display:none !important;
+        opacity:0 !important;
+        height:0 !important;
+        pointer-events:none !important;
     }}
 
     .main-title {{
@@ -55,7 +75,6 @@ def apply_style(webp_file):
         font-weight: 800;
         text-align: center;
         margin-top: 30px;
-        letter-spacing: -1px;
     }}
 
     .sub-title {{
@@ -68,8 +87,8 @@ def apply_style(webp_file):
     div[data-baseweb="input"] {{
         border-radius: 20px !important;
         border: 2px solid #111 !important;
-        background: rgba(255,255,255,0.85) !important;
-        backdrop-filter: blur(6px);
+        background: rgba(255,255,255,0.75) !important;
+        backdrop-filter: blur(8px);
     }}
 
     input {{
@@ -86,12 +105,6 @@ def apply_style(webp_file):
         padding: 14px 60px;
         border: none;
         box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        transition: all .2s ease;
-    }}
-
-    .stButton > button:hover {{
-        transform: translateY(-1px);
-        box-shadow: 0 15px 40px rgba(0,0,0,0.25);
     }}
     </style>
     """, unsafe_allow_html=True)
@@ -102,8 +115,8 @@ apply_style(BG_IMAGE)
 st.markdown('<div class="main-title">Верифікація сертифікату</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-title">Введіть номер документа для перевірки</div>', unsafe_allow_html=True)
 
-# Honeypot
-bot_trap = st.text_input("hidden", key="hp", label_visibility="collapsed")
+# Hidden honeypot
+bot_trap = st.text_input("", key="hp", label_visibility="collapsed")
 if bot_trap:
     st.stop()
 
@@ -112,7 +125,8 @@ query_params = st.query_params
 default_id = query_params.get("cert_id", "")
 if isinstance(default_id, list):
     default_id = default_id[0]
-default_id = re.sub(r'[^a-zA-Z0-9]', '', str(default_id)).upper()
+
+default_id = re.sub(r'[^A-Z0-9]', '', str(default_id).upper())
 
 _, col, _ = st.columns([1, 2, 1])
 with col:
@@ -121,11 +135,11 @@ with col:
 
 final_id = cert_input.strip().upper()
 
-# ---------------- Logic ----------------
+# ---------------- VALIDATION ----------------
 if final_id:
 
-    if len(final_id) > 20:
-        st.error("Некоректний формат")
+    if not re.fullmatch(r"[A-Z0-9]{3,20}", final_id):
+        st.error("Некоректний формат сертифіката")
         st.stop()
 
     try:
@@ -140,29 +154,32 @@ if final_id:
         if match.empty:
             st.session_state.attempts += 1
             if st.session_state.attempts >= 5:
-                st.session_state.blocked_until = time.time() + 60
-                st.error("Заблоковано на 60 секунд")
+                st.session_state.blocked_until = time.time() + 90
+                st.error("Забагато спроб. Блокування 90 секунд.")
                 st.stop()
             st.error("Сертифікат не знайдено")
             st.stop()
 
         st.session_state.attempts = 0
-
         row = match.iloc[0]
 
-        p_id = str(row.get("program", "")).split(".")[0].strip()
-        p_name = PROGRAMS.get(p_id, f"Спецкурс №{p_id}")
+        # Escape everything from table
+        name = html.escape(str(row.get("name", "—")))
+        instructor = html.escape(str(row.get("instructor", "—")))
+
+        p_id = html.escape(str(row.get("program", "")).split(".")[0].strip())
+        p_name = html.escape(PROGRAMS.get(p_id, f"Спецкурс №{p_id}"))
 
         d_iss = pd.to_datetime(row.get("date"), dayfirst=True, errors="coerce")
         d_exp = d_iss + timedelta(days=1095)
         days_left = (d_exp - datetime.now()).days
 
         if days_left < 0:
-            cls, txt = "#e74c3c", "ТЕРМІН ЗАВЕРШЕНО"
+            color, txt = "#e74c3c", "ТЕРМІН ЗАВЕРШЕНО"
         elif days_left <= 30:
-            cls, txt = "#f1c40f", "ПІДХОДИТЬ ДО КІНЦЯ"
+            color, txt = "#f1c40f", "ПІДХОДИТЬ ДО КІНЦЯ"
         else:
-            cls, txt = "#2ecc71", "АКТИВНИЙ"
+            color, txt = "#2ecc71", "АКТИВНИЙ"
 
         share_url = f"https://your-app.streamlit.app/?cert_id={final_id}"
         qr = qrcode.make(share_url)
@@ -173,58 +190,58 @@ if final_id:
         # ---------------- CARD ----------------
         components.html(f"""
         <div style="
-            max-width: 860px;
-            margin: 30px auto;
-            background: rgba(255,255,255,0.75);
-            backdrop-filter: blur(12px);
-            border-radius: 28px;
-            padding: 32px;
-            box-shadow: 0 30px 80px rgba(0,0,0,0.08);
-            animation: fadeUp .6s ease;
-            font-family: system-ui;
+            max-width:860px;
+            margin:30px auto;
+            background:rgba(255,255,255,0.6);
+            backdrop-filter:blur(18px) saturate(180%);
+            border-radius:32px;
+            padding:32px;
+            box-shadow:0 40px 120px rgba(0,0,0,0.08);
+            animation:fadeUp .5s ease;
+            font-family:system-ui;
         ">
             <div style="display:grid;grid-template-columns:1.2fr .8fr;gap:30px;">
                 <div>
                     <div style="opacity:.5;font-size:12px;">УЧАСНИК</div>
-                    <div style="font-size:22px;font-weight:700;margin-bottom:18px;">{row.get('name')}</div>
+                    <div style="font-size:22px;font-weight:700;">{name}</div><br>
 
                     <div style="opacity:.5;font-size:12px;">ПРОГРАМА</div>
-                    <div style="font-size:17px;font-weight:600;margin-bottom:18px;">{p_name}</div>
+                    <div style="font-weight:600;">{p_name}</div><br>
 
                     <div style="opacity:.5;font-size:12px;">ІНСТРУКТОР</div>
-                    <div style="font-size:17px;font-weight:600;">{row.get('instructor')}</div>
+                    <div style="font-weight:600;">{instructor}</div>
                 </div>
 
                 <div>
                     <div style="opacity:.5;font-size:12px;">ВИДАНО</div>
-                    <div style="font-weight:600;margin-bottom:16px;">{d_iss.strftime('%d.%m.%Y')}</div>
+                    <div>{d_iss.strftime('%d.%m.%Y')}</div><br>
 
                     <div style="opacity:.5;font-size:12px;">ДІЙСНИЙ ДО</div>
-                    <div style="font-weight:600;margin-bottom:16px;">{d_exp.strftime('%d.%m.%Y')}</div>
+                    <div>{d_exp.strftime('%d.%m.%Y')}</div><br>
 
-                    <div style="opacity:.5;font-size:12px;">ЗАЛИШИЛОСЬ ДНІВ</div>
+                    <div style="opacity:.5;font-size:12px;">ЗАЛИШИЛОСЬ</div>
                     <div style="font-size:22px;font-weight:800;">{max(0, days_left)}</div>
                 </div>
             </div>
 
-            <div style="margin-top:25px;border-top:1px solid #eee;padding-top:20px;display:flex;justify-content:space-between;align-items:center;">
-                <div style="font-weight:800;color:{cls};font-size:18px;">● {txt}</div>
-                <img src="data:image/png;base64,{qr_b64}" width="90" style="border-radius:16px;border:1px solid #eee;">
+            <div style="margin-top:20px;border-top:1px solid #eee;padding-top:15px;display:flex;justify-content:space-between;">
+                <div style="font-weight:800;color:{color};">● {txt}</div>
+                <img src="data:image/png;base64,{qr_b64}" width="90" style="border-radius:14px;border:1px solid #eee;">
             </div>
         </div>
 
         <style>
         @keyframes fadeUp {{
-            from {{ opacity:0; transform:translateY(15px); }}
+            from {{ opacity:0; transform:translateY(10px); }}
             to {{ opacity:1; transform:translateY(0); }}
         }}
         @media(max-width:768px){{
             div[style*="grid-template-columns"] {{
-                grid-template-columns:1fr !important;
+                grid-template-columns:1fr!important;
             }}
         }}
         </style>
         """, height=520)
 
     except Exception as e:
-        st.error(f"Помилка: {e}")
+        st.error("Внутрішня помилка сервера")
