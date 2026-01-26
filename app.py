@@ -28,16 +28,16 @@ html, body, [class*="st-"] {
     margin:0; padding:0; font-family: Inter, system-ui, sans-serif;
 }
 .stApp {
-min-height:100vh;
-background: linear-gradient(270deg, #FBFEFE, #C1E6EF, #E7E8FA, #E7E8FA);
-background-size: 800% 800%;
-animation: gradientMove 60s ease infinite;
-display:flex;
-justify-content:center;
-align-items:center; /* по центру вертикально */
-padding-top:50px; 
-padding-bottom:2rem;
-flex-direction: column; /* щоб колонки йшли зверху вниз */
+    min-height:100vh;
+    background: linear-gradient(270deg, #FBFEFE, #C1E6EF, #E7E8FA, #E7E8FA);
+    background-size: 800% 800%;
+    animation: gradientMove 180s ease infinite;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding-top:50px; 
+    padding-bottom:2rem;
+    flex-direction: column;
 }
 
 /* Gradient animation */
@@ -49,7 +49,7 @@ flex-direction: column; /* щоб колонки йшли зверху вниз 
 
 /* HEADERS */
 .main-title {
-    font-size:42px; font-weight:800; color:#222; text-align:center; margin-top:100px; margin-bottom:10px;
+    font-size:42px; font-weight:800; color:#222; text-align:center; margin-top:50px; margin-bottom:10px;
 }
 .sub-title {
     font-size:18px; font-weight:500; color:#333; text-align:center; margin-bottom:30px;
@@ -57,7 +57,7 @@ flex-direction: column; /* щоб колонки йшли зверху вниз 
 
 /* INPUT */
 .stTextInput>div>div>input {
-    background: rgba(255,255,255,1) !important;
+    background: rgba(255,255,255,0.6) !important;
     backdrop-filter: blur(12px) saturate(180%);
     border-radius:14px !important;
     padding:14px !important;
@@ -67,6 +67,7 @@ flex-direction: column; /* щоб колонки йшли зверху вниз 
 .stTextInput>div>div>input::placeholder {color:#333 !important;}
 input:focus {border:1px solid #000 !important; box-shadow:0 0 0 2px rgba(0,0,0,0.05);}
 
+/* BUTTON */
 .stButton>button {
     border-radius:999px;
     padding:14px 36px;
@@ -75,17 +76,33 @@ input:focus {border:1px solid #000 !important; box-shadow:0 0 0 2px rgba(0,0,0,0
     font-weight:600;
     border:none;
     transition: all 0.2s ease;
-    display: block; /* робимо блочним */
-    margin: 0 auto; /* по центру */
-    }
+    display:block;
+    margin:0 auto;
 }
-
 .stButton>button:hover {
-transform: translateY(-1px);
-box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
 }
 
-.stButton>button:hover {transform: translateY(-1px); box-shadow:0 10px 25px rgba(0,0,0,0.2);}
+/* ERROR MESSAGE */
+.center-error {
+    display: inline-block;
+    background: rgba(255, 100, 100, 0.15);
+    backdrop-filter: blur(8px);
+    border-radius: 12px;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #e74c3c;
+    text-align: center;
+    margin: 20px auto;
+}
+
+/* GLASS CARD ANIMATION */
+@keyframes fadeUp {
+    from {opacity:0; transform:translateY(10px);}
+    to {opacity:1; transform:translateY(0);}
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -98,7 +115,7 @@ if "blocked_until" not in st.session_state:
 now = time.time()
 if now < st.session_state.blocked_until:
     wait = int(st.session_state.blocked_until - now)
-    st.error(f"Забагато спроб. Спробуйте через {wait} сек.")
+    st.markdown(f'<div class="center-error">Забагато спроб. Спробуйте через {wait} сек.</div>', unsafe_allow_html=True)
     st.stop()
 
 # ---------------- UI ----------------
@@ -110,16 +127,16 @@ query_params = st.query_params
 default_id = query_params.get("cert_id", [""])[0]
 default_id = re.sub(r'[^A-Z0-9]', '', str(default_id).upper())
 
-_, col, _ = st.columns([1, 2, 1])
+_, col, _ = st.columns([1,2,1])
 with col:
-  cert_input = st.text_input(
-    "Номер сертифікату",
-    value=default_id,
-    placeholder="Введіть номер...",
-    label_visibility="collapsed"
-)
+    cert_input = st.text_input(
+        "Номер сертифікату",
+        value=default_id,
+        placeholder="Введіть номер...",
+        label_visibility="collapsed"
+    )
 cols = st.columns([1,2,1])
-with cols[1]: # середня колонка
+with cols[1]:
     st.button("Перевірити")
 
 final_id = cert_input.strip().upper()
@@ -127,38 +144,28 @@ final_id = cert_input.strip().upper()
 # ---------------- VALIDATION & DISPLAY ----------------
 if final_id:
 
-    if match.empty:
-        st.session_state.attempts += 1
-
-
-# Вбудовані стилі для повідомлень про помилку
-        error_style = """
-            <style>
-            .center-error {
-            display: inline-block;
-            background: rgba(255, 100, 100, 0.15); /* прозоре червоне */
-            backdrop-filter: blur(8px);
-            border-radius: 12px;
-            padding: 10px 20px; /* трохи ширше за текст */
-            font-size: 16px;
-            font-weight: 600;
-            color: #e74c3c;
-            text-align: center;
-            margin: 20px auto;
-        }
-        </style>
-        """
-
-
-        st.markdown(error_style, unsafe_allow_html=True)
-    
-    
-        if st.session_state.attempts >= 5:
-            st.markdown('<div class="center-error">Забагато спроб. Блокування 90 секунд.</div>', unsafe_allow_html=True)
-            st.stop()
-        st.markdown('<div class="center-error">Сертифікат не знайдено</div>', unsafe_allow_html=True)
+    if not re.fullmatch(r"[A-Z0-9]{3,20}", final_id):
+        st.markdown('<div class="center-error">Некоректний формат сертифіката</div>', unsafe_allow_html=True)
         st.stop()
 
+    try:
+        conn = st.connection("gsheets", type=GSheetsConnection)
+        df = conn.read(ttl=300)
+        df.columns = df.columns.str.lower().str.strip()
+        df["id"] = df["id"].astype(str).str.split(".").str[0].str.strip().str.upper()
+        match = df[df["id"] == final_id]
+
+        # ---------- SER TIFICATE NOT FOUND ----------
+        if match.empty:
+            st.session_state.attempts += 1
+            if st.session_state.attempts >= 5:
+                st.session_state.blocked_until = time.time() + 90
+                st.markdown('<div class="center-error">Забагато спроб. Блокування 90 секунд.</div>', unsafe_allow_html=True)
+                st.stop()
+            st.markdown('<div class="center-error">Сертифікат не знайдено</div>', unsafe_allow_html=True)
+            st.stop()
+
+        # ---------- CERTIFICATE FOUND ----------
         st.session_state.attempts = 0
         row = match.iloc[0]
 
@@ -178,13 +185,14 @@ if final_id:
         else:
             color, txt = "#2ecc71", "Активний"
 
+        # ---------- QR CODE ----------
         share_url = f"https://verified-sert-xyrgwme8tqwwxtpwwzmsn5.streamlit.app/?cert_id={final_id}"
         qr = qrcode.make(share_url)
         buf = BytesIO()
         qr.save(buf, format="PNG")
         qr_b64 = base64.b64encode(buf.getvalue()).decode()
 
-        # ---------------- GLASS CARD ----------------
+        # ---------- GLASS CARD ----------
         components.html(f"""
         <div style="
             max-width:860px;
@@ -198,41 +206,20 @@ if final_id:
             font-family:system-ui;
             color:#111;
         ">
-            <style>
-                @keyframes fadeUp {{
-                    from {{opacity:0; transform:translateY(10px);}}
-                    to {{opacity:1; transform:translateY(0);}}
-                }}
-                .grid {{
-                    display:grid;
-                    grid-template-columns:1.2fr .8fr;
-                    gap:30px;
-                }}
-                @media(max-width:768px){{
-                    .grid {{grid-template-columns:1fr !important;}}
-                }}
-                .label {{opacity:0.5; font-size:12px;}}
-                .value {{font-size:22px; font-weight:700; margin-bottom:12px; color:#111;}}
-                .small {{font-weight:600; font-size:18px; color:#111;}}
-            </style>
-            <div class="grid">
+            <div style="display:grid;grid-template-columns:1.2fr .8fr;gap:30px;">
                 <div>
                     <div class="label">Учасник</div>
                     <div class="value">{name}</div>
-
                     <div class="label">Програма</div>
                     <div class="small">{p_name}</div>
-
                     <div class="label">Інструктори</div>
                     <div class="small">{instructor}</div>
                 </div>
                 <div>
                     <div class="label">Дата видачі</div>
                     <div class="value">{d_iss.strftime('%d.%m.%Y')}</div>
-
                     <div class="label">Дійсний до</div>
                     <div class="value">{d_exp.strftime('%d.%m.%Y')}</div>
-
                     <div class="label">Залишилось</div>
                     <div class="value">{max(0, days_left)} днів</div>
                 </div>
@@ -245,4 +232,4 @@ if final_id:
         """, height=520)
 
     except Exception as e:
-        st.error("Внутрішня помилка сервера")
+        st.markdown('<div class="center-error">Внутрішня помилка сервера</div>', unsafe_allow_html=True)
