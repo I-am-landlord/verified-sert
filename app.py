@@ -46,135 +46,77 @@ if now < st.session_state.blocked_until:
     st.stop()
 
 # ---------------- STYLE ----------------
-def apply_style(webp_file):
-    bin_str = ""
-    if os.path.exists(webp_file):
-        with open(webp_file, "rb") as f:
-            bin_str = base64.b64encode(f.read()).decode()
-
-    st.markdown(f"""
+def apply_style():
+    st.markdown("""
     <style>
-    html, body {{
-        background: #fff !important;
-        color-scheme: light !important;
-    }}
+    /* Не ламаємо Streamlit тему */
+    .stApp {
+        background: transparent !important;
+    }
 
-    /* ROOT */
-    [data-testid="stAppViewContainer"] {{
-        position: relative;
-        overflow-x: hidden;
-        background: transparent;
-    }}
-
-    /* PARALLAX BACKGROUND LAYER */
-    #parallax-bg {{
+    /* Контейнер для всього фону */
+    #fx-bg {
         position: fixed;
+        inset: 0;
+        z-index: 0;
+        overflow: hidden;
+    }
+
+    /* Parallax layer */
+    #fx-parallax {
+        position: absolute;
         inset: -10%;
-        z-index: -3;
-        background-image:
-            linear-gradient(to bottom,
-                rgba(255,255,255,0.0) 0%,
-                rgba(255,255,255,0.2) 30%,
-                rgba(255,255,255,0.6) 55%,
-                rgba(255,255,255,0.95) 75%),
-            url("data:image/webp;base64,{bin_str}");
-        background-size: cover;
-        background-position: center top;
-        will-change: transform;
+        background: radial-gradient(circle at 30% 10%, #ffffff, #f5f5f7, #ececec);
         transform: translateY(0px) scale(1.05);
-    }}
+        transition: transform 0.05s linear;
+    }
 
-    /* ANIMATED LIGHT GLOW */
-    #light-overlay {{
-        position: fixed;
+    /* Light glow animation */
+    #fx-light {
+        position: absolute;
         inset: 0;
-        z-index: -2;
         background:
-            radial-gradient(circle at 20% 10%, rgba(255,255,255,0.35), transparent 60%),
-            radial-gradient(circle at 80% 30%, rgba(255,255,255,0.25), transparent 65%);
-        animation: floatLights 14s ease-in-out infinite alternate;
+            radial-gradient(circle at 20% 20%, rgba(255,255,255,0.6), transparent 60%),
+            radial-gradient(circle at 80% 40%, rgba(255,255,255,0.4), transparent 65%);
+        animation: floatLight 18s ease-in-out infinite alternate;
         pointer-events: none;
-    }}
+    }
 
-    @keyframes floatLights {{
-        0%   {{ background-position: 0% 0%, 100% 0%; }}
-        100% {{ background-position: 20% 10%, 80% 20%; }}
-    }}
+    @keyframes floatLight {
+        from { background-position: 0% 0%, 100% 0%; }
+        to   { background-position: 15% 10%, 85% 20%; }
+    }
 
-    /* GRAIN / NOISE */
-    #noise {{
-        position: fixed;
+    /* Grain overlay */
+    #fx-grain {
+        position: absolute;
         inset: 0;
-        z-index: -1;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+        opacity: 0.35;
         pointer-events: none;
-        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-        opacity: 0.4;
-        animation: noiseMove 0.3s infinite alternate;
-    }}
+    }
 
-    @keyframes noiseMove {{
-        from {{ transform: translate(0,0); }}
-        to   {{ transform: translate(-1%,1%); }}
-    }}
-
-    /* UI ELEMENTS */
-    .main-title {{
-        font-size: 46px;
-        font-weight: 800;
-        text-align: center;
-        margin-top: 30px;
-    }}
-
-    .sub-title {{
-        font-size: 18px;
-        text-align: center;
-        opacity: 0.7;
-        margin-bottom: 35px;
-    }}
-
-    div[data-baseweb="input"] {{
-        border-radius: 20px !important;
-        border: 2px solid #111 !important;
-        background: rgba(255,255,255,0.6) !important;
-        backdrop-filter: blur(14px) saturate(180%);
-    }}
-
-    input {{
-        font-size: 20px !important;
-        text-align: center !important;
-        padding: 12px !important;
-    }}
-
-    .stButton > button {{
-        background: linear-gradient(180deg, #111, #000);
-        color: white;
-        border-radius: 999px;
-        font-weight: 700;
-        padding: 14px 60px;
-        border: none;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    }}
-
-    /* MOBILE OPTIMIZATION */
-    @media (max-width: 768px) {{
-        #parallax-bg {{ transform: none !important; }}
-    }}
+    /* ВАЖЛИВО: контент поверх фону */
+    section.main > div {
+        position: relative;
+        z-index: 2;
+    }
     </style>
 
-    <div id="parallax-bg"></div>
-    <div id="light-overlay"></div>
-    <div id="noise"></div>
+    <div id="fx-bg">
+        <div id="fx-parallax"></div>
+        <div id="fx-light"></div>
+        <div id="fx-grain"></div>
+    </div>
 
     <script>
-    const bg = document.getElementById("parallax-bg");
-
-    window.addEventListener("scroll", () => {{
-        const scrolled = window.scrollY;
-        bg.style.transform = `translateY(${scrolled * 0.25}px) scale(1.05)`;
-    }});
+    const layer = document.getElementById("fx-parallax");
+    window.addEventListener("scroll", () => {
+        const offset = window.scrollY * 0.15;
+        layer.style.transform = `translateY(${offset}px) scale(1.05)`;
+    });
     </script>
     """, unsafe_allow_html=True)
-
 # ---------------- UI ----------------
 st.markdown('<div class="main-title">Верифікація сертифікату</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-title">Введіть номер сертифікату для перевірки</div>', unsafe_allow_html=True)
