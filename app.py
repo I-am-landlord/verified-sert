@@ -202,9 +202,8 @@ if final_id:
         conn = st.connection("gsheets", type=GSheetsConnection)
         df = conn.read(ttl=300)
         df.columns = df.columns.str.lower().str.strip()
-        df["id"] = df["id"].astype(str).str.split(".").str[0].str.strip().upper()
+        df["id"] = df["id"].astype(str).str.split(".").str[0].str.strip().str.upper()
         match = df[df["id"] == final_id]
-
         if match.empty:
             st.session_state.attempts += 1
             if st.session_state.attempts >= 5:
