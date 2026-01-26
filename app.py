@@ -23,135 +23,126 @@ st.set_page_config(page_title="Верифікація сертифікату", l
 # ---------------- GLOBAL STYLES ----------------
 st.markdown("""
 <style>
-/* Підключення локального шрифту */
-@font-face {
-    font-family: 'DejaVu';
-    src: url('dejavu-sans.book.ttf') format('truetype');
-}
+/* ===== BODY & APP ===== */
 html, body, [class*="st-"] {
-    margin:0; padding:0;
-    font-family: 'DejaVu', system-ui, sans-serif;
+    margin:0;
+    padding:0;
+    font-family: 'DejaVu', Arial, sans-serif;
 }
 
-/* BODY & BACKGROUND */
 .stApp {
-    min-height:100vh;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 50px 20px;
     background: linear-gradient(270deg, #FBFEFE, #C1E6EF, #E7E8FA, #E7E8FA);
     background-size: 800% 800%;
     animation: gradientMove 180s ease infinite;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    flex-direction: column;
-    padding:50px 20px;
 }
 
-/* Gradient animation */
+/* ===== GRADIENT ANIMATION ===== */
 @keyframes gradientMove {
-    0%{background-position:0% 50%;}
-    50%{background-position:100% 50%;}
-    100%{background-position:0% 50%;}
+    0% {background-position:0% 50%;}
+    50% {background-position:100% 50%;}
+    100% {background-position:0% 50%;}
 }
 
-/* HEADERS */
+/* ===== HEADERS ===== */
 .main-title {
-    font-size:48px; font-weight:800; color:#222; text-align:center; margin:30px 0 10px 0;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    font-size: 42px;
+    font-weight: 800;
+    color: #111;
+    text-align: center;
+    margin-bottom: 10px;
 }
 .sub-title {
-    font-size:20px; font-weight:500; color:#333; text-align:center; margin-bottom:30px;
+    font-size: 18px;
+    font-weight: 500;
+    color: #222;
+    text-align: center;
+    margin-bottom: 30px;
 }
 
-/* INPUT */
+/* ===== INPUT ===== */
 .stTextInput>div>div>input {
-    background: rgba(255,255,255,0.25) !important;
+    background: rgba(255,255,255,0.3) !important;
     backdrop-filter: blur(12px) saturate(180%);
-    border-radius:16px !important;
-    padding:14px !important;
-    font-size:16px !important;
-    color:#111 !important;
-    text-align:center;
-    border:1px solid rgba(255,255,255,0.3);
-    transition: all 0.3s ease;
+    border-radius: 14px !important;
+    padding: 14px !important;
+    font-size: 16px !important;
+    color: #111 !important;
+    border: 1px solid rgba(0,0,0,0.1) !important;
 }
-.stTextInput>div>div>input::placeholder {color:#333 !important;}
-input:focus {
-    border:1px solid rgba(255,255,255,0.6) !important;
-    box-shadow:0 0 20px rgba(0,0,0,0.05);
+.stTextInput>div>div>input::placeholder {
+    color: #333 !important;
+}
+.stTextInput>div>div>input:focus {
+    border: 1px solid #000 !important;
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.05) !important;
 }
 
-/* BUTTON */
+/* ===== BUTTON ===== */
 .stButton>button {
-    border-radius:999px;
-    padding:14px 36px;
-    background: linear-gradient(145deg, #111, #222);
-    color:white;
-    font-weight:600;
-    border:none;
+    border-radius: 999px;
+    padding: 14px 36px;
+    background: linear-gradient(180deg, #111, #000);
+    color: white;
+    font-weight: 600;
+    border: none;
     transition: all 0.3s ease;
-    display:block;
-    margin:10px auto;
-    box-shadow:0 8px 25px rgba(0,0,0,0.15);
+    display: block;
+    margin: 20px auto 0 auto;
 }
 .stButton>button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.25);
 }
 
-/* ERROR MESSAGE */
-.center-error-container {
-    display:flex;
-    justify-content:center;
-    width:100%;
+/* ===== GLASS CARD ===== */
+.glass-card {
+    max-width: 900px;
+    width: 100%;
+    margin: 40px auto;
+    background: rgba(255,255,255,0.35);
+    backdrop-filter: blur(20px) saturate(180%);
+    border-radius: 32px;
+    padding: 40px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.08);
+    color: #111;
+    font-family: 'DejaVu', Arial, sans-serif;
+    animation: fadeUp 0.8s ease forwards;
 }
+@keyframes fadeUp {
+    from {opacity:0; transform:translateY(20px);}
+    to {opacity:1; transform:translateY(0);}
+}
+.glass-grid {
+    display: grid;
+    grid-template-columns: 1.2fr .8fr;
+    gap: 30px;
+}
+@media(max-width:768px){
+    .glass-grid {grid-template-columns:1fr !important;}
+}
+.label {opacity:0.6; font-size:13px; font-weight:500; margin-bottom:4px;}
+.value {font-size:22px; font-weight:700; margin-bottom:15px; color:#111;}
+.small {font-size:18px; font-weight:600; color:#111; margin-bottom:12px;}
+.status {font-weight:800; font-size:16px;}
+
+/* ===== ERROR MESSAGE ===== */
 .center-error {
-    display:inline-block;
-    background: rgba(255, 100, 100, 0.2);
+    display: inline-block;
+    background: rgba(255, 100, 100, 0.15);
     backdrop-filter: blur(8px);
-    border-radius: 14px;
+    border-radius: 12px;
     padding: 10px 20px;
     font-size: 16px;
     font-weight: 600;
-    color:#e74c3c;
-    text-align:center;
-    margin:20px auto;
-}
-
-/* GLASS CARD */
-.glass-card {
-    max-width:860px;
-    margin:30px auto;
-    background: rgba(255,255,255,0.2);
-    backdrop-filter: blur(20px) saturate(180%);
-    border-radius:32px;
-    padding:36px;
-    box-shadow:0 40px 120px rgba(0,0,0,0.08);
-    font-family:'DejaVu', system-ui, sans-serif;
-    color:#111;
-    animation:fadeUp 0.7s ease forwards;
-}
-.glass-card .grid {
-    display:grid;
-    grid-template-columns:1.2fr .8fr;
-    gap:32px;
-}
-.glass-card .label {
-    opacity:0.6; font-size:13px; margin-top:6px;
-}
-.glass-card .value {
-    font-size:18px; font-weight:700; margin-bottom:12px; color:#111;
-}
-.glass-card .small {
-    font-weight:600; font-size:16px; color:#111; margin-bottom:12px;
-}
-@media(max-width:768px){
-    .glass-card .grid {grid-template-columns:1fr !important;}
-}
-
-/* Card fade animation */
-@keyframes fadeUp {
-    from {opacity:0; transform:translateY(15px);}
-    to {opacity:1; transform:translateY(0);}
+    color: #e74c3c;
+    text-align: center;
+    margin: 20px auto;
 }
 </style>
 """, unsafe_allow_html=True)
