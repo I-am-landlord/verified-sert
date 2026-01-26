@@ -240,25 +240,7 @@ if final_id:
         .label {{opacity:0.6; font-size:13px; font-weight:500; margin-bottom:4px;}}
         .value {{font-size:22px; font-weight:700; margin-bottom:15px; color:#111;}}
         .small {{font-size:18px; font-weight:600; color:#111; margin-bottom:12px;}}
-        .status {{font-weight:800; font-size:16px;}}
-        @media(max-width:768px)
-            .glass-grid {grid-template-columns:1fr !important;}
-            .glass-card {
-                    padding: 25px !important;
-                    margin: 20px auto !important;
-                    }
-            .value {font-size: 20px !important;}
-            .small {font-size: 16px !important;}
-            
-
-        @media(max-width:480px)
-            .glass-card {
-                padding: 20px !important;
-                margin: 10px auto !important;
-            }
-            .value {font-size: 18px !important;}
-            .small {font-size: 15px !important;}
-            
+        .status {{font-weight:800; font-size:16px;}}     
         </style>
         <div class="glass-card">
             <div class="glass-grid">
