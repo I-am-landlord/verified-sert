@@ -25,7 +25,7 @@ st.markdown("""
 <style>
 /* ===== BODY & BACKGROUND ===== */
 html, body, [class*="st-"] {
-    margin:0; padding:0; font-family: Inter, system-ui, sans-serif;
+    margin:10px; padding:0; font-family: Inter, system-ui, sans-serif;
 }
 .stApp {
 min-height:100vh;
@@ -35,7 +35,7 @@ animation: gradientMove 60s ease infinite;
 display:flex;
 justify-content:center;
 align-items:center; /* по центру вертикально */
-padding-top:50px; /* прибираємо верхній відступ */
+padding-top:50px; 
 padding-bottom:2rem;
 flex-direction: column; /* щоб колонки йшли зверху вниз */
 }
@@ -49,7 +49,7 @@ flex-direction: column; /* щоб колонки йшли зверху вниз 
 
 /* HEADERS */
 .main-title {
-    font-size:42px; font-weight:800; color:#222; text-align:center; margin-bottom:10px;
+    font-size:42px; font-weight:800; color:#222; text-align:center; margin-top:100px; margin-bottom:10px;
 }
 .sub-title {
     font-size:18px; font-weight:500; color:#333; text-align:center; margin-bottom:30px;
@@ -57,20 +57,27 @@ flex-direction: column; /* щоб колонки йшли зверху вниз 
 
 /* INPUT */
 .stTextInput>div>div>input {
-    background: rgba(255,255,255,0.4) !important;
+    background: rgba(255,255,255,1) !important;
     backdrop-filter: blur(12px) saturate(180%);
     border-radius:14px !important;
     padding:14px !important;
     font-size:16px !important;
-    border:1px solid #ddd !important;
     color:#111 !important;
 }
 .stTextInput>div>div>input::placeholder {color:#333 !important;}
 input:focus {border:1px solid #000 !important; box-shadow:0 0 0 2px rgba(0,0,0,0.05);}
 
 .stButton>button {
-    border-radius:999px; padding:14px 36px; background: linear-gradient(180deg, #111, #000);
-    color:white; font-weight:600; border:none; transition: all 0.2s ease;
+    border-radius:999px;
+    padding:14px 36px;
+    background: linear-gradient(180deg, #111, #000);
+    color:white;
+    font-weight:600;
+    border:none;
+    transition: all 0.2s ease;
+    display: block; /* робимо блочним */
+    margin: 0 auto; /* по центру */
+    }
 }
 .stButton>button:hover {transform: translateY(-1px); box-shadow:0 10px 25px rgba(0,0,0,0.2);}
 </style>
@@ -187,7 +194,7 @@ if final_id:
                 }}
                 .label {{opacity:0.5; font-size:12px;}}
                 .value {{font-size:22px; font-weight:700; margin-bottom:12px; color:#111;}}
-                .small {{font-weight:600; font-size:16px; color:#111;}}
+                .small {{font-weight:600; font-size:18px; color:#111;}}
             </style>
             <div class="grid">
                 <div>
