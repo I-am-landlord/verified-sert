@@ -127,8 +127,8 @@ final_id = cert_input.strip().upper()
 # ---------------- VALIDATION & DISPLAY ----------------
 if final_id:
 
-    if match.empty:
-st.session_state.attempts += 1
+if match.empty:
+    st.session_state.attempts += 1
 
 
 # Вбудовані стилі для повідомлень про помилку
@@ -145,19 +145,19 @@ st.session_state.attempts += 1
         color: #e74c3c;
         text-align: center;
         margin: 20px auto;
-        }
-        </style>
-        """
+    }
+    </style>
+    """
 
 
-st.markdown(error_style, unsafe_allow_html=True)
+    st.markdown(error_style, unsafe_allow_html=True)
 
 
-if st.session_state.attempts >= 5:
-    st.markdown('<div class="center-error">Забагато спроб. Блокування 90 секунд.</div>', unsafe_allow_html=True)
-st.stop()
+    if st.session_state.attempts >= 5:
+        st.markdown('<div class="center-error">Забагато спроб. Блокування 90 секунд.</div>', unsafe_allow_html=True)
+        st.stop()
     st.markdown('<div class="center-error">Сертифікат не знайдено</div>', unsafe_allow_html=True)
-st.stop()
+    st.stop()
 
         st.session_state.attempts = 0
         row = match.iloc[0]
