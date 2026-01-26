@@ -14,7 +14,7 @@ import streamlit.components.v1 as components
 PROGRAMS = {
     "1": "6-ти годинний тренінг з першої допомоги",
     "2": "12-ти годинний тренінг з першої допомоги",
-    "3": "48-ми годинний тренінг з домедичної допомоги",
+    "3": "48-ми годинний тренінг з домедічної допомоги",
     "4": "Тренінг з першої допомоги домашнім тваринам"
 }
 
@@ -43,6 +43,13 @@ html, body, [class*="st-"] {
     0%{background-position:0% 50%;}
     50%{background-position:100% 50%;}
     100%{background-position:0% 50%;}
+}
+
+/* ===== MAIN CONTAINER CENTERING ===== */
+.main .block-container {
+    max-width: 1200px;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
 }
 
 /* ===== HEADERS ===== */
@@ -74,28 +81,6 @@ input:focus {border:1px solid #000 !important; box-shadow:0 0 0 2px rgba(0,0,0,0
     margin:10px auto;
 }
 .stButton>button:hover {transform: translateY(-1px); box-shadow:0 10px 25px rgba(0,0,0,0.2);}
-
-/* ===== GLASS CARD ===== */
-.glass-card {
-    max-width:900px;
-    width:100%;
-    margin:40px auto;
-    background: rgba(255,255,255,0.35);
-    backdrop-filter: blur(20px) saturate(180%);
-    border-radius:32px;
-    padding:40px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.08);
-    color:#111;
-    font-family: 'DejaVu', Arial, sans-serif;
-    animation: fadeUp 0.8s ease forwards;
-}
-@keyframes fadeUp {from {opacity:0; transform:translateY(20px);} to {opacity:1; transform:translateY(0);}}
-.glass-grid {display:grid; grid-template-columns:1.2fr .8fr; gap:30px;}
-@media(max-width:768px){.glass-grid {grid-template-columns:1fr !important;}}
-.label {opacity:0.6; font-size:13px; font-weight:500; margin-bottom:4px;}
-.value {font-size:22px; font-weight:700; margin-bottom:15px; color:#111;}
-.small {font-size:18px; font-weight:600; color:#111; margin-bottom:12px;}
-.status {font-weight:800; font-size:16px;}
 
 /* ===== ERROR CENTERED ===== */
 .center-error {
@@ -186,6 +171,29 @@ if final_id:
 
         # ----------- GLASS CARD -----------
         components.html(f"""
+        <style>
+        /* ===== GLASS CARD ===== */
+        .glass-card {{
+            max-width:900px;
+            width:100%;
+            margin:40px auto;
+            background: rgba(255,255,255,0.35);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-radius:32px;
+            padding:40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.08);
+            color:#111;
+            font-family: 'DejaVu', Arial, sans-serif;
+            animation: fadeUp 0.8s ease forwards;
+        }}
+        @keyframes fadeUp {{from {{opacity:0; transform:translateY(20px);}} to {{opacity:1; transform:translateY(0);}}}}
+        .glass-grid {{display:grid; grid-template-columns:1.2fr .8fr; gap:30px;}}
+        @media(max-width:768px){{.glass-grid {{grid-template-columns:1fr !important;}}}}
+        .label {{opacity:0.6; font-size:13px; font-weight:500; margin-bottom:4px;}}
+        .value {{font-size:22px; font-weight:700; margin-bottom:15px; color:#111;}}
+        .small {{font-size:18px; font-weight:600; color:#111; margin-bottom:12px;}}
+        .status {{font-weight:800; font-size:16px;}}
+        </style>
         <div class="glass-card">
             <div class="glass-grid">
                 <div>
