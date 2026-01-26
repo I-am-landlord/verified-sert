@@ -46,76 +46,93 @@ if now < st.session_state.blocked_until:
     st.stop()
 
 # ---------------- STYLE ----------------
-def apply_style():
-    st.markdown("""
+def apply_style(bg_base64=""):
+    st.markdown(f"""
     <style>
-    /* Не ламаємо Streamlit тему */
-    .stApp {
-        background: transparent !important;
-    }
+    /* Гарантовано застосовується */
+    .stApp {{
+        background: #f9f9f9;
+    }}
 
-    /* Контейнер для всього фону */
-    #fx-bg {
+    /* Фон */
+    body::before {{
+        content: "";
         position: fixed;
         inset: 0;
-        z-index: 0;
-        overflow: hidden;
-    }
+        z-index: -3;
+        background: 
+            radial-gradient(circle at 30% 10%, #ffffff 0%, #f3f3f3 40%, #ededed 100%);
+    }}
 
-    /* Parallax layer */
-    #fx-parallax {
-        position: absolute;
-        inset: -10%;
-        background: radial-gradient(circle at 30% 10%, #ffffff, #f5f5f7, #ececec);
-        transform: translateY(0px) scale(1.05);
-        transition: transform 0.05s linear;
-    }
-
-    /* Light glow animation */
-    #fx-light {
-        position: absolute;
+    /* Glow */
+    body::after {{
+        content: "";
+        position: fixed;
         inset: 0;
+        z-index: -2;
         background:
-            radial-gradient(circle at 20% 20%, rgba(255,255,255,0.6), transparent 60%),
-            radial-gradient(circle at 80% 40%, rgba(255,255,255,0.4), transparent 65%);
-        animation: floatLight 18s ease-in-out infinite alternate;
+            radial-gradient(circle at 20% 20%, rgba(255,255,255,0.7), transparent 60%),
+            radial-gradient(circle at 80% 40%, rgba(255,255,255,0.5), transparent 65%);
+        animation: floatGlow 20s ease-in-out infinite alternate;
         pointer-events: none;
-    }
+    }}
 
-    @keyframes floatLight {
-        from { background-position: 0% 0%, 100% 0%; }
-        to   { background-position: 15% 10%, 85% 20%; }
-    }
+    @keyframes floatGlow {{
+        from {{ background-position: 0% 0%, 100% 0%; }}
+        to   {{ background-position: 15% 10%, 85% 20%; }}
+    }}
 
-    /* Grain overlay */
-    #fx-grain {
-        position: absolute;
+    /* Grain */
+    .stApp::after {{
+        content: "";
+        position: fixed;
         inset: 0;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
-        opacity: 0.35;
+        z-index: -1;
         pointer-events: none;
-    }
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+        opacity: 0.4;
+    }}
 
-    /* ВАЖЛИВО: контент поверх фону */
-    section.main > div {
-        position: relative;
-        z-index: 2;
-    }
+    /* Заголовки */
+    .main-title {{
+        font-size: 44px;
+        font-weight: 800;
+        text-align: center;
+        margin-top: 40px;
+    }}
+
+    .sub-title {{
+        text-align: center;
+        font-size: 18px;
+        opacity: 0.6;
+        margin-bottom: 30px;
+    }}
+
+    /* Інпут */
+    div[data-baseweb="input"] {{
+        border-radius: 18px !important;
+        border: 2px solid #111 !important;
+        background: rgba(255,255,255,0.7) !important;
+        backdrop-filter: blur(12px);
+    }}
+
+    input {{
+        text-align: center !important;
+        font-size: 18px !important;
+        padding: 14px !important;
+    }}
+
+    /* Кнопка */
+    .stButton > button {{
+        background: linear-gradient(180deg, #111, #000);
+        color: white;
+        padding: 14px 50px;
+        border-radius: 999px;
+        font-weight: 700;
+        border: none;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }}
     </style>
-
-    <div id="fx-bg">
-        <div id="fx-parallax"></div>
-        <div id="fx-light"></div>
-        <div id="fx-grain"></div>
-    </div>
-
-    <script>
-    const layer = document.getElementById("fx-parallax");
-    window.addEventListener("scroll", () => {
-        const offset = window.scrollY * 0.15;
-        layer.style.transform = `translateY(${offset}px) scale(1.05)`;
-    });
-    </script>
     """, unsafe_allow_html=True)
 # ---------------- UI ----------------
 st.markdown('<div class="main-title">Верифікація сертифікату</div>', unsafe_allow_html=True)
