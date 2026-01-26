@@ -112,6 +112,8 @@ with col:
     placeholder="Введіть номер...",
     label_visibility="collapsed"
 )
+cols = st.columns([1,2,1])
+with cols[1]: # середня колонка
 st.button("Перевірити")
 
 final_id = cert_input.strip().upper()
