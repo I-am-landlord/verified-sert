@@ -35,7 +35,7 @@ animation: gradientMove 60s ease infinite;
 display:flex;
 justify-content:center;
 align-items:center; /* по центру вертикально */
-padding-top:0; /* прибираємо верхній відступ */
+padding-top:50px; /* прибираємо верхній відступ */
 padding-bottom:2rem;
 flex-direction: column; /* щоб колонки йшли зверху вниз */
 }
