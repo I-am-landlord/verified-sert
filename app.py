@@ -31,7 +31,7 @@ html, body, [class*="st-"] {
     min-height:100vh;
     background: linear-gradient(270deg, #FBFEFE, #C1E6EF, #E7E8FA, #E7E8FA);
     background-size: 800% 800%;
-    animation: gradientMove 20s ease infinite;
+    animation: gradientMove 60s ease infinite; /* повільніше у 3 рази */
     display:flex; justify-content:center; align-items:start; padding-top:3rem;
 }
 
@@ -50,7 +50,7 @@ html, body, [class*="st-"] {
     font-size:18px; font-weight:500; color:#333; text-align:center; margin-bottom:30px;
 }
 
-/* ===== CARD ===== */
+/* ===== GLASS CARD ===== */
 .glass-card {
     max-width:860px;
     margin:0 auto 50px;
@@ -74,15 +74,21 @@ html, body, [class*="st-"] {
 
 /* ===== TEXT STYLING ===== */
 .glass-card div.label {opacity:0.5; font-size:12px;}
-.glass-card div.value {font-size:22px; font-weight:700; margin-bottom:12px;}
-.glass-card div.small {font-weight:600; font-size:16px;}
+.glass-card div.value {font-size:22px; font-weight:700; margin-bottom:12px; color:#111;}
+.glass-card div.small {font-weight:600; font-size:16px; color:#111;}
 
-/* ===== BUTTONS & INPUT ===== */
-input, textarea {
-    border-radius:14px !important; padding:14px !important;
-    font-size:16px !important; border:1px solid #ddd !important; background:#fff !important;
+/* ===== INPUT & BUTTON ===== */
+.stTextInput>div>div>input {
+    background: rgba(255,255,255,0.4) !important;
+    backdrop-filter: blur(12px) saturate(180%);
+    border-radius:14px !important;
+    padding:14px !important;
+    font-size:16px !important;
+    border:1px solid #ddd !important;
+    color:#111 !important;
 }
-input:focus, textarea:focus {border:1px solid #000 !important; box-shadow:0 0 0 2px rgba(0,0,0,0.05);}
+.stTextInput>div>div>input::placeholder {color:#333 !important;}
+input:focus {border:1px solid #000 !important; box-shadow:0 0 0 2px rgba(0,0,0,0.05);}
 .stButton > button {
     border-radius:999px; padding:14px 36px; background: linear-gradient(180deg, #111, #000);
     color:white; font-weight:600; border:none; transition: all 0.2s ease;
