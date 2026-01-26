@@ -220,27 +220,78 @@ if final_id:
         # ----------- GLASS CARD -----------
         components.html(f"""
         <style>
-        /* ===== GLASS CARD ===== */
-        .glass-card {{
-            max-width:900px;
-            width:100%;
-            margin:40px auto;
-            background: rgba(255,255,255,0.35);
-            backdrop-filter: blur(20px) saturate(180%);
-            border-radius:32px;
-            padding:40px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.08);
-            color:#111;
-            font-family: 'DejaVu', Arial, sans-serif;
-            animation: fadeUp 0.8s ease forwards;
-        }}
-        @keyframes fadeUp {{from {{opacity:0; transform:translateY(20px);}} to {{opacity:1; transform:translateY(0);}}}}
-        .glass-grid {{display:grid; grid-template-columns:1.2fr .8fr; gap:30px;}}
-        @media(max-width:768px){{.glass-grid {{grid-template-columns:1fr !important;}}}}
-        .label {{opacity:0.6; font-size:13px; font-weight:500; margin-bottom:4px;}}
-        .value {{font-size:22px; font-weight:700; margin-bottom:15px; color:#111;}}
-        .small {{font-size:18px; font-weight:600; color:#111; margin-bottom:12px;}}
-        .status {{font-weight:800; font-size:16px;}}     
+            body {
+                margin: 0;
+                padding: 0;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            /* ===== GLASS CARD ===== */
+            .glass-card {
+                max-width:900px;
+                width:100%;
+                margin:40px auto;
+                background: rgba(255,255,255,0.35);
+                backdrop-filter: blur(20px) saturate(180%);
+                border-radius:32px;
+                padding:40px;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.08);
+                color:#111;
+                font-family: 'DejaVu', Arial, sans-serif;
+                animation: fadeUp 0.8s ease forwards;
+            }
+            @keyframes fadeUp {from {opacity:0; transform:translateY(20px);} to {opacity:1; transform:translateY(0);}}
+            .glass-grid {display:grid; grid-template-columns:1.2fr .8fr; gap:30px;}
+            .label {opacity:0.6; font-size:13px; font-weight:500; margin-bottom:4px;}
+            .value {font-size:22px; font-weight:700; margin-bottom:15px; color:#111;}
+            .small {font-size:18px; font-weight:600; color:#111; margin-bottom:12px;}
+            .status {font-weight:800; font-size:16px;}
+            
+            /* ===== MOBILE RESPONSIVE ===== */
+            @media(max-width:768px) {
+                .glass-grid {
+                    grid-template-columns:1fr !important;
+                    gap: 20px;
+                }
+                .glass-card {
+                    padding: 30px !important;
+                    margin: 20px 10px !important;
+                    border-radius: 24px !important;
+                }
+                .value {
+                    font-size: 20px !important;
+                    margin-bottom: 12px !important;
+                }
+                .small {
+                    font-size: 16px !important;
+                    margin-bottom: 10px !important;
+                }
+                .status {
+                    font-size: 14px !important;
+                }
+            }
+            
+            @media(max-width:480px) {
+                .glass-card {
+                    padding: 20px !important;
+                    margin: 15px 5px !important;
+                    border-radius: 20px !important;
+                }
+                .value {
+                    font-size: 18px !important;
+                    margin-bottom: 10px !important;
+                }
+                .small {
+                    font-size: 15px !important;
+                    margin-bottom: 8px !important;
+                }
+                .label {
+                    font-size: 12px !important;
+                }
+                .status {
+                    font-size: 13px !important;
+                }
         </style>
         <div class="glass-card">
             <div class="glass-grid">
