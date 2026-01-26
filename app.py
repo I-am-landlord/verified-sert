@@ -161,7 +161,9 @@ st.markdown('<div class="sub-title">Введіть номер сертифіка
 
 # ---------------- INPUT ----------------
 query_params = st.query_params
-default_id = query_params.get("cert_id", [""])[0]
+default_id = query_params.get("cert_id", "")
+if isinstance(default_id, list):
+    default_id = default_id[0] if default_id else ""
 default_id = re.sub(r'[^A-Z0-9]', '', str(default_id).upper())
 
 _, col, _ = st.columns([1,2,1])
