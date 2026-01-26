@@ -138,8 +138,8 @@ st.markdown('<div class="sub-title">Введіть номер сертифіка
 
 
 # URL param
-query_params = st.query_params
-default_id = query_params.get("cert_id", "")
+query_params = st.experimental_get_query_params()
+default_id = query_params.get("cert_id", [""])[0]
 if isinstance(default_id, list):
     default_id = default_id[0]
 
@@ -147,8 +147,13 @@ default_id = re.sub(r'[^A-Z0-9]', '', str(default_id).upper())
 
 _, col, _ = st.columns([1, 2, 1])
 with col:
-    cert_input = st.text_input("", value=default_id, placeholder="Введіть номер...")
-    st.button("Перевірити")
+    cert_input = st.text_input(
+    "Номер сертифікату",
+    value=default_id,
+    placeholder="Введіть номер...",
+    label_visibility="collapsed"
+    )
+st.button("Перевірити")
 
 final_id = cert_input.strip().upper()
 
