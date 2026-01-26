@@ -12,8 +12,6 @@ from datetime import datetime, timedelta
 import streamlit.components.v1 as components
 
 # ---------------- CONFIG ----------------
-BG_IMAGE = "background.webp"
-
 PROGRAMS = {
     "1": "6-ти годинний тренінг з першої допомоги",
     "2": "12-ти годинний тренінг з першої допомоги",
@@ -21,102 +19,34 @@ PROGRAMS = {
     "4": "Тренінг з першої допомоги домашнім тваринам"
 }
 
-st.set_page_config(page_title="Верифікаця сертифікату", layout="wide")
+st.set_page_config(page_title="Верифікація сертифікату", layout="wide")
 
-def apply_style():
-    import streamlit as st
-
-    st.markdown("""
-    <style>
-    /* ===== RESET + BASE ===== */
-    html, body, [class*="st-"] {
-        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-
-    .stApp {
-        background: linear-gradient(180deg, #f8f9fb, #eef1f5);
-    }
-
-    /* ===== CONTAINER ===== */
-    section.main > div {
-        max-width: 900px;
-        padding-top: 2rem;
-    }
-
-    /* ===== HEADERS ===== */
-    h1, h2, h3 {
-        font-weight: 800;
-        letter-spacing: -0.02em;
-    }
-
-    h1 {
-        text-align: center;
-        font-size: 42px;
-    }
-
-    /* ===== CARDS ===== */
-    div[data-testid="stVerticalBlock"] > div:has(> div[data-testid="stMarkdownContainer"]) {
-        background: rgba(255,255,255,0.75);
-        backdrop-filter: blur(12px);
-        border-radius: 20px;
-        padding: 20px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-        margin-bottom: 1rem;
-    }
-
-    /* ===== INPUTS ===== */
-    input, textarea {
-        border-radius: 14px !important;
-        padding: 14px !important;
-        font-size: 16px !important;
-        border: 1px solid #ddd !important;
-        background: #fff !important;
-    }
-
-    input:focus, textarea:focus {
-        border: 1px solid #000 !important;
-        box-shadow: 0 0 0 2px rgba(0,0,0,0.05);
-    }
-
-    /* ===== BUTTON ===== */
-    .stButton > button {
-        border-radius: 999px;
-        padding: 14px 36px;
-        background: linear-gradient(180deg, #111, #000);
-        color: white;
-        font-weight: 600;
-        border: none;
-        transition: all 0.2s ease;
-    }
-
-    .stButton > button:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-    }
-
-    /* ===== SELECTBOX ===== */
-    div[data-baseweb="select"] > div {
-        border-radius: 14px;
-    }
-
-    /* ===== CHECKBOX / RADIO ===== */
-    label {
-        font-size: 15px;
-    }
-
-    /* ===== SCROLLBAR ===== */
-    ::-webkit-scrollbar {
-        width: 8px;
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background: #ccc;
-        border-radius: 8px;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-# ---------------- FORCE LIGHT THEME ----------------
-
+# ---------------- STYLE ----------------
+st.markdown("""
+<style>
+html, body, [class*="st-"] {font-family: Inter, system-ui, sans-serif;}
+.stApp {background: linear-gradient(180deg, #f8f9fb, #eef1f5);}
+section.main > div {max-width: 900px; padding-top: 2rem;}
+h1,h2,h3 {font-weight:800; letter-spacing:-0.02em;}
+h1 {text-align:center; font-size:42px;}
+div[data-testid="stVerticalBlock"] > div:has(> div[data-testid="stMarkdownContainer"]) {
+    background: rgba(255,255,255,0.75);
+    backdrop-filter: blur(12px);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    margin-bottom: 1rem;
+}
+input, textarea {border-radius:14px !important; padding:14px !important; font-size:16px !important; border:1px solid #ddd !important; background:#fff !important;}
+input:focus, textarea:focus {border:1px solid #000 !important; box-shadow:0 0 0 2px rgba(0,0,0,0.05);}
+.stButton > button {border-radius:999px; padding:14px 36px; background: linear-gradient(180deg, #111, #000); color:white; font-weight:600; border:none; transition: all 0.2s ease;}
+.stButton > button:hover {transform: translateY(-1px); box-shadow:0 10px 25px rgba(0,0,0,0.2);}
+div[data-baseweb="select"] > div {border-radius:14px;}
+label {font-size:15px;}
+::-webkit-scrollbar {width:8px;}
+::-webkit-scrollbar-thumb {background:#ccc; border-radius:8px;}
+</style>
+""", unsafe_allow_html=True)
 
 # ---------------- PROTECTION ----------------
 if "attempts" not in st.session_state:
@@ -130,33 +60,22 @@ if now < st.session_state.blocked_until:
     st.error(f"Забагато спроб. Спробуйте через {wait} сек.")
     st.stop()
 
-# ---------------- STYLE ----------------
-
 # ---------------- UI ----------------
 st.markdown('<div class="main-title">Верифікація сертифікату</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-title">Введіть номер сертифікату для перевірки</div>', unsafe_allow_html=True)
 
-
-# URL param
+# ---------------- URL param ----------------
 query_params = st.query_params
 default_id = query_params.get("cert_id", [""])[0]
-if isinstance(default_id, list):
-default_id = default_id[0]
-
-
-default_id = re.sub(r'[^A-Z0-9]', '', str(default_id).upper())
-if isinstance(default_id, list):
-    default_id = default_id[0]
-
 default_id = re.sub(r'[^A-Z0-9]', '', str(default_id).upper())
 
-_, col, _ = st.columns([1, 2, 1])
+_, col, _ = st.columns([1,2,1])
 with col:
     cert_input = st.text_input(
-    "Номер сертифікату",
-    value=default_id,
-    placeholder="Введіть номер...",
-    label_visibility="collapsed"
+        "Номер сертифікату",
+        value=default_id,
+        placeholder="Введіть номер...",
+        label_visibility="collapsed"
     )
 st.button("Перевірити")
 
@@ -190,7 +109,7 @@ if final_id:
         st.session_state.attempts = 0
         row = match.iloc[0]
 
-        # Escape everything from table
+        # Escape
         name = html.escape(str(row.get("name", "—")))
         instructor = html.escape(str(row.get("instructor", "—")))
 
