@@ -20,16 +20,13 @@ PROGRAMS = {
 
 st.set_page_config(page_title="Верифікація сертифікату", layout="wide")
 
-# ---------------- GLOBAL STYLES ----------------
+# ---------------- STYLES ----------------
 st.markdown("""
 <style>
 /* ===== BODY & APP ===== */
 html, body, [class*="st-"] {
-    margin:0;
-    padding:0;
-    font-family: 'DejaVu', Arial, sans-serif;
+    margin:0; padding:0; font-family: 'DejaVu', Arial, sans-serif;
 }
-
 .stApp {
     min-height: 100vh;
     display: flex;
@@ -42,7 +39,7 @@ html, body, [class*="st-"] {
     animation: gradientMove 180s ease infinite;
 }
 
-/* ===== GRADIENT ANIMATION ===== */
+/* Gradient animation */
 @keyframes gradientMove {
     0% {background-position:0% 50%;}
     50% {background-position:100% 50%;}
@@ -51,18 +48,10 @@ html, body, [class*="st-"] {
 
 /* ===== HEADERS ===== */
 .main-title {
-    font-size: 42px;
-    font-weight: 800;
-    color: #111;
-    text-align: center;
-    margin-bottom: 10px;
+    font-size: 42px; font-weight: 800; color: #111; text-align: center; margin-bottom: 10px;
 }
 .sub-title {
-    font-size: 18px;
-    font-weight: 500;
-    color: #222;
-    text-align: center;
-    margin-bottom: 30px;
+    font-size: 18px; font-weight: 500; color: #222; text-align: center; margin-bottom: 30px;
 }
 
 /* ===== INPUT ===== */
@@ -75,13 +64,8 @@ html, body, [class*="st-"] {
     color: #111 !important;
     border: 1px solid rgba(0,0,0,0.1) !important;
 }
-.stTextInput>div>div>input::placeholder {
-    color: #333 !important;
-}
-.stTextInput>div>div>input:focus {
-    border: 1px solid #000 !important;
-    box-shadow: 0 0 0 2px rgba(0,0,0,0.05) !important;
-}
+.stTextInput>div>div>input::placeholder {color: #333 !important;}
+.stTextInput>div>div>input:focus {border: 1px solid #000 !important; box-shadow: 0 0 0 2px rgba(0,0,0,0.05);}
 
 /* ===== BUTTON ===== */
 .stButton>button {
@@ -147,36 +131,18 @@ html, body, [class*="st-"] {
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------- PROTECTION ----------------
-if "attempts" not in st.session_state:
-    st.session_state.attempts = 0
-if "blocked_until" not in st.session_state:
-    st.session_state.blocked_until = 0
-
-now = time.time()
-if now < st.session_state.blocked_until:
-    wait = int(st.session_state.blocked_until - now)
-    st.markdown(f'<div class="center-error-container"><div class="center-error">Забагато спроб. Спробуйте через {wait} сек.</div></div>', unsafe_allow_html=True)
-    st.stop()
-
 # ---------------- UI ----------------
 st.markdown('<div class="main-title">Верифікація сертифікату</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-title">Введіть номер сертифікату для перевірки</div>', unsafe_allow_html=True)
 
-# ---------------- URL param ----------------
+# ---------------- INPUT ----------------
 query_params = st.query_params
 default_id = query_params.get("cert_id", [""])[0]
 default_id = re.sub(r'[^A-Z0-9]', '', str(default_id).upper())
 
-_, col, _ = st.columns([1,2,1])
+_, col, _ = st.columns([1, 2, 1])
 with col:
-    cert_input = st.text_input(
-        "Номер сертифікату",
-        value=default_id,
-        placeholder="Введіть номер...",
-        label_visibility="collapsed"
-    )
-
+    cert_input = st.text_input("Номер сертифікату", value=default_id, placeholder="Введіть номер...", label_visibility="collapsed")
 cols = st.columns([1,2,1])
 with cols[1]:
     st.button("Перевірити")
@@ -186,22 +152,24 @@ final_id = cert_input.strip().upper()
 # ---------------- VALIDATION & DISPLAY ----------------
 if final_id:
     if not re.fullmatch(r"[A-Z0-9]{3,20}", final_id):
-        st.markdown('<div class="center-error-container"><div class="center-error">Некоректний формат сертифіката</div></div>', unsafe_allow_html=True)
+        st.markdown('<div class="center-error">Некоректний формат сертифіката</div>', unsafe_allow_html=True)
         st.stop()
 
     try:
         conn = st.connection("gsheets", type=GSheetsConnection)
         df = conn.read(ttl=300)
+
         df.columns = df.columns.str.lower().str.strip()
         df["id"] = df["id"].astype(str).str.split(".").str[0].str.strip().str.upper()
         match = df[df["id"] == final_id]
+
         if match.empty:
             st.session_state.attempts += 1
             if st.session_state.attempts >= 5:
                 st.session_state.blocked_until = time.time() + 90
-                st.markdown('<div class="center-error-container"><div class="center-error">Забагато спроб. Блокування 90 секунд.</div></div>', unsafe_allow_html=True)
+                st.markdown('<div class="center-error">Забагато спроб. Блокування 90 секунд.</div>', unsafe_allow_html=True)
                 st.stop()
-            st.markdown('<div class="center-error-container"><div class="center-error">Сертифікат не знайдено</div></div>', unsafe_allow_html=True)
+            st.markdown('<div class="center-error">Сертифікат не знайдено</div>', unsafe_allow_html=True)
             st.stop()
 
         st.session_state.attempts = 0
@@ -223,17 +191,16 @@ if final_id:
         else:
             color, txt = "#2ecc71", "Активний"
 
-        # ---------- QR CODE ----------
         share_url = f"https://verified-sert-xyrgwme8tqwwxtpwwzmsn5.streamlit.app/?cert_id={final_id}"
         qr = qrcode.make(share_url)
         buf = BytesIO()
         qr.save(buf, format="PNG")
         qr_b64 = base64.b64encode(buf.getvalue()).decode()
 
-        # ---------- GLASS CARD ----------
+        # ---------------- GLASS CARD ----------------
         components.html(f"""
         <div class="glass-card">
-            <div class="grid">
+            <div class="glass-grid">
                 <div>
                     <div class="label">Учасник</div>
                     <div class="value">{name}</div>
@@ -255,12 +222,12 @@ if final_id:
                     <div class="value">{max(0, days_left)} днів</div>
                 </div>
             </div>
-            <div style="margin-top:20px;border-top:1px solid rgba(0,0,0,0.1);padding-top:15px;display:flex;justify-content:space-between;align-items:center;">
-                <div style="font-weight:800;color:{color};">● {txt}</div>
-                <img src="data:image/png;base64,{qr_b64}" width="90" style="border-radius:14px;border:1px solid rgba(0,0,0,0.1);">
+            <div style="margin-top:20px; border-top:1px solid #eee; padding-top:15px; display:flex; justify-content:space-between; align-items:center;">
+                <div class="status" style="color:{color};">● {txt}</div>
+                <img src="data:image/png;base64,{qr_b64}" width="90" style="border-radius:14px; border:1px solid #eee;">
             </div>
         </div>
-        """, height=520)
+        """, height=560)
 
     except Exception as e:
-        st.markdown('<div class="center-error-container"><div class="center-error">Внутрішня помилка сервера</div></div>', unsafe_allow_html=True)
+        st.markdown('<div class="center-error">Внутрішня помилка сервера</div>', unsafe_allow_html=True)
