@@ -98,12 +98,12 @@ default_id = query_params.get("cert_id", [""])[0]
 default_id = re.sub(r'[^A-Z0-9]', '', str(default_id).upper())
 
 _, col, _ = st.columns([1, 2, 1])
-with col:
-cert_input = st.text_input(
-"Номер сертифікату",
-value=default_id,
-placeholder="Введіть номер...",
-label_visibility="collapsed"
+    with col:
+    cert_input = st.text_input(
+    "Номер сертифікату",
+    value=default_id,
+    placeholder="Введіть номер...",
+    label_visibility="collapsed"
 )
 st.button("Перевірити")
 
