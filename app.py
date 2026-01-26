@@ -127,26 +127,37 @@ final_id = cert_input.strip().upper()
 # ---------------- VALIDATION & DISPLAY ----------------
 if final_id:
 
-    if not re.fullmatch(r"[A-Z0-9]{3,20}", final_id):
-        st.error("Некоректний формат сертифіката")
-        st.stop()
+    if match.empty:
+st.session_state.attempts += 1
 
-    try:
-        conn = st.connection("gsheets", type=GSheetsConnection)
-        df = conn.read(ttl=300)
 
-        df.columns = df.columns.str.lower().str.strip()
-        df["id"] = df["id"].astype(str).str.split(".").str[0].str.strip().str.upper()
-        match = df[df["id"] == final_id]
+# Вбудовані стилі для повідомлень про помилку
+    error_style = """
+        <style>
+        .center-error {
+        display: inline-block;
+        background: rgba(255, 100, 100, 0.15); /* прозоре червоне */
+        backdrop-filter: blur(8px);
+        border-radius: 12px;
+        padding: 10px 20px; /* трохи ширше за текст */
+        font-size: 16px;
+        font-weight: 600;
+        color: #e74c3c;
+        text-align: center;
+        margin: 20px auto;
+        }
+        </style>
+        """
 
-        if match.empty:
-            st.session_state.attempts += 1
-            if st.session_state.attempts >= 5:
-                st.session_state.blocked_until = time.time() + 90
-                st.error("Забагато спроб. Блокування 90 секунд.")
-                st.stop()
-            st.error("Сертифікат не знайдено")
-            st.stop()
+
+st.markdown(error_style, unsafe_allow_html=True)
+
+
+if st.session_state.attempts >= 5:
+    st.markdown('<div class="center-error">Забагато спроб. Блокування 90 секунд.</div>', unsafe_allow_html=True)
+st.stop()
+    st.markdown('<div class="center-error">Сертифікат не знайдено</div>', unsafe_allow_html=True)
+st.stop()
 
         st.session_state.attempts = 0
         row = match.iloc[0]
