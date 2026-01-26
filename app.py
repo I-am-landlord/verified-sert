@@ -23,92 +23,96 @@ PROGRAMS = {
 
 st.set_page_config(page_title="Верифікаця сертифікату", layout="wide")
 
-def apply_style(bg_base64=""):
-    st.markdown(f"""
+def apply_style():
+    import streamlit as st
+
+    st.markdown("""
     <style>
-    /* Гарантовано застосовується */
-    .stApp {{
-        background: #f9f9f9;
-    }}
+    /* ===== RESET + BASE ===== */
+    html, body, [class*="st-"] {
+        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
 
-    /* Фон */
-    body::before {{
-        content: "";
-        position: fixed;
-        inset: 0;
-        z-index: -3;
-        background: 
-            radial-gradient(circle at 30% 10%, #ffffff 0%, #f3f3f3 40%, #ededed 100%);
-    }}
+    .stApp {
+        background: linear-gradient(180deg, #f8f9fb, #eef1f5);
+    }
 
-    /* Glow */
-    body::after {{
-        content: "";
-        position: fixed;
-        inset: 0;
-        z-index: -2;
-        background:
-            radial-gradient(circle at 20% 20%, rgba(255,255,255,0.7), transparent 60%),
-            radial-gradient(circle at 80% 40%, rgba(255,255,255,0.5), transparent 65%);
-        animation: floatGlow 20s ease-in-out infinite alternate;
-        pointer-events: none;
-    }}
+    /* ===== CONTAINER ===== */
+    section.main > div {
+        max-width: 900px;
+        padding-top: 2rem;
+    }
 
-    @keyframes floatGlow {{
-        from {{ background-position: 0% 0%, 100% 0%; }}
-        to   {{ background-position: 15% 10%, 85% 20%; }}
-    }}
-
-    /* Grain */
-    .stApp::after {{
-        content: "";
-        position: fixed;
-        inset: 0;
-        z-index: -1;
-        pointer-events: none;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-        opacity: 0.4;
-    }}
-
-    /* Заголовки */
-    .main-title {{
-        font-size: 44px;
+    /* ===== HEADERS ===== */
+    h1, h2, h3 {
         font-weight: 800;
-        text-align: center;
-        margin-top: 40px;
-    }}
+        letter-spacing: -0.02em;
+    }
 
-    .sub-title {{
+    h1 {
         text-align: center;
-        font-size: 18px;
-        opacity: 0.6;
-        margin-bottom: 30px;
-    }}
+        font-size: 42px;
+    }
 
-    /* Інпут */
-    div[data-baseweb="input"] {{
-        border-radius: 18px !important;
-        border: 2px solid #111 !important;
-        background: rgba(255,255,255,0.7) !important;
+    /* ===== CARDS ===== */
+    div[data-testid="stVerticalBlock"] > div:has(> div[data-testid="stMarkdownContainer"]) {
+        background: rgba(255,255,255,0.75);
         backdrop-filter: blur(12px);
-    }}
+        border-radius: 20px;
+        padding: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        margin-bottom: 1rem;
+    }
 
-    input {{
-        text-align: center !important;
-        font-size: 18px !important;
+    /* ===== INPUTS ===== */
+    input, textarea {
+        border-radius: 14px !important;
         padding: 14px !important;
-    }}
+        font-size: 16px !important;
+        border: 1px solid #ddd !important;
+        background: #fff !important;
+    }
 
-    /* Кнопка */
-    .stButton > button {{
+    input:focus, textarea:focus {
+        border: 1px solid #000 !important;
+        box-shadow: 0 0 0 2px rgba(0,0,0,0.05);
+    }
+
+    /* ===== BUTTON ===== */
+    .stButton > button {
+        border-radius: 999px;
+        padding: 14px 36px;
         background: linear-gradient(180deg, #111, #000);
         color: white;
-        padding: 14px 50px;
-        border-radius: 999px;
-        font-weight: 700;
+        font-weight: 600;
         border: none;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-    }}
+        transition: all 0.2s ease;
+    }
+
+    .stButton > button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+
+    /* ===== SELECTBOX ===== */
+    div[data-baseweb="select"] > div {
+        border-radius: 14px;
+    }
+
+    /* ===== CHECKBOX / RADIO ===== */
+    label {
+        font-size: 15px;
+    }
+
+    /* ===== SCROLLBAR ===== */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: #ccc;
+        border-radius: 8px;
+    }
     </style>
     """, unsafe_allow_html=True)
 # ---------------- FORCE LIGHT THEME ----------------
