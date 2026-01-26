@@ -51,7 +51,7 @@ html, body, [class*="st-"] {
     margin: 0 auto;
     padding-left: 2rem;
     padding-right: 2rem;
-    padding-top: 30vh;
+    padding-top: 50vh;
 }
 
 /* ===== HEADERS ===== */
