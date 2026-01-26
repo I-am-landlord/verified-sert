@@ -28,11 +28,16 @@ html, body, [class*="st-"] {
     margin:0; padding:0; font-family: Inter, system-ui, sans-serif;
 }
 .stApp {
-    min-height:100vh;
-    background: linear-gradient(270deg, #FBFEFE, #C1E6EF, #E7E8FA, #E7E8FA);
-    background-size: 800% 800%;
-    animation: gradientMove 60s ease infinite;
-    display:flex; justify-content:center; align-items:start; padding-top:3rem;
+min-height:100vh;
+background: linear-gradient(270deg, #FBFEFE, #C1E6EF, #E7E8FA, #E7E8FA);
+background-size: 800% 800%;
+animation: gradientMove 60s ease infinite;
+display:flex;
+justify-content:center;
+align-items:center; /* по центру вертикально */
+padding-top:0; /* прибираємо верхній відступ */
+padding-bottom:2rem;
+flex-direction: column; /* щоб колонки йшли зверху вниз */
 }
 
 /* Gradient animation */
@@ -92,14 +97,14 @@ query_params = st.query_params
 default_id = query_params.get("cert_id", [""])[0]
 default_id = re.sub(r'[^A-Z0-9]', '', str(default_id).upper())
 
-_, col, _ = st.columns([1,2,1])
+_, col, _ = st.columns([1, 2, 1])
 with col:
-    cert_input = st.text_input(
-        "Номер сертифікату",
-        value=default_id,
-        placeholder="Введіть номер...",
-        label_visibility="collapsed"
-    )
+cert_input = st.text_input(
+"Номер сертифікату",
+value=default_id,
+placeholder="Введіть номер...",
+label_visibility="collapsed"
+)
 st.button("Перевірити")
 
 final_id = cert_input.strip().upper()
