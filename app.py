@@ -23,29 +23,6 @@ PROGRAMS = {
 
 st.set_page_config(page_title="Верифікаця сертифікату", layout="wide")
 
-# ---------------- FORCE LIGHT THEME ----------------
-st.markdown("""
-<style>
-html, body, [class*="css"] {
-    color-scheme: light !important;
-    background-color: #ffffff !important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# ---------------- PROTECTION ----------------
-if "attempts" not in st.session_state:
-    st.session_state.attempts = 0
-if "blocked_until" not in st.session_state:
-    st.session_state.blocked_until = 0
-
-now = time.time()
-if now < st.session_state.blocked_until:
-    wait = int(st.session_state.blocked_until - now)
-    st.error(f"Забагато спроб. Спробуйте через {wait} сек.")
-    st.stop()
-
-# ---------------- STYLE ----------------
 def apply_style(bg_base64=""):
     st.markdown(f"""
     <style>
@@ -134,6 +111,23 @@ def apply_style(bg_base64=""):
     }}
     </style>
     """, unsafe_allow_html=True)
+# ---------------- FORCE LIGHT THEME ----------------
+
+
+# ---------------- PROTECTION ----------------
+if "attempts" not in st.session_state:
+    st.session_state.attempts = 0
+if "blocked_until" not in st.session_state:
+    st.session_state.blocked_until = 0
+
+now = time.time()
+if now < st.session_state.blocked_until:
+    wait = int(st.session_state.blocked_until - now)
+    st.error(f"Забагато спроб. Спробуйте через {wait} сек.")
+    st.stop()
+
+# ---------------- STYLE ----------------
+
 # ---------------- UI ----------------
 st.markdown('<div class="main-title">Верифікація сертифікату</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-title">Введіть номер сертифікату для перевірки</div>', unsafe_allow_html=True)
