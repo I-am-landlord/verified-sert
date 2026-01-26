@@ -14,7 +14,7 @@ import streamlit.components.v1 as components
 PROGRAMS = {
     "1": "6-ти годинний тренінг з першої допомоги",
     "2": "12-ти годинний тренінг з першої допомоги",
-    "3": "48-ми годинний тренінг з домедічної допомоги",
+    "3": "48-ми годинний тренінг з домедичної допомоги",
     "4": "Тренінг з першої допомоги домашнім тваринам"
 }
 
@@ -96,6 +96,52 @@ input:focus {border:1px solid #000 !important; box-shadow:0 0 0 2px rgba(0,0,0,0
     color:#e74c3c;
     text-align:center;
     margin:20px auto;
+}
+/* ===== MAIN CONTAINER CENTERING ===== */
+.main .block-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding-left: 2rem;
+    padding-right: 2rem;
+    padding-top: 30vh;
+}
+
+/* ===== MOBILE RESPONSIVE ===== */
+@media(max-width: 768px) {
+    .main .block-container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+        padding-top: 10vh;
+    }
+    
+    .main-title {
+        font-size: 32px !important;
+    }
+    
+    .sub-title {
+        font-size: 16px !important;
+        margin-bottom: 20px !important;
+    }
+    
+    .stApp {
+        padding: 20px 10px !important;
+    }
+}
+
+@media(max-width: 480px) {
+    .main .block-container {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+        padding-top: 5vh;
+    }
+    
+    .main-title {
+        font-size: 28px !important;
+    }
+    
+    .sub-title {
+        font-size: 14px !important;
+    }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -195,6 +241,24 @@ if final_id:
         .value {{font-size:22px; font-weight:700; margin-bottom:15px; color:#111;}}
         .small {{font-size:18px; font-weight:600; color:#111; margin-bottom:12px;}}
         .status {{font-weight:800; font-size:16px;}}
+        @media(max-width:768px){
+            .glass-grid {grid-template-columns:1fr !important;}
+                .glass-card {
+                    padding: 25px !important;
+                    margin: 20px auto !important;
+                    }
+                .value {font-size: 20px !important;}
+                .small {font-size: 16px !important;}
+                    }
+
+            @media(max-width:480px){
+                .glass-card {
+                padding: 20px !important;
+                margin: 10px auto !important;
+            }
+                .value {font-size: 18px !important;}
+                .small {font-size: 15px !important;}
+            }
         </style>
         <div class="glass-card">
             <div class="glass-grid">
