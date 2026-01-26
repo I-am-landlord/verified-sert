@@ -25,7 +25,7 @@ st.markdown("""
 <style>
 /* ===== BODY & BACKGROUND ===== */
 html, body, [class*="st-"] {
-    margin:10px; padding:0; font-family: Inter, system-ui, sans-serif;
+    margin:0; padding:0; font-family: Inter, system-ui, sans-serif;
 }
 .stApp {
 min-height:100vh;
