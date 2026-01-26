@@ -80,20 +80,11 @@ input:focus {border:1px solid #000 !important; box-shadow:0 0 0 2px rgba(0,0,0,0
     }
 }
 
-.center-error {
-    display: inline-block;
-    background: rgba(255, 100, 100, 0.15);
-    backdrop-filter: blur(6px);
-    border-radius: 12px;
-    padding: 10px 15px; /* ширина трохи більше за текст */
-    font-size: 16px;
-    font-weight: 600;
-    color: #e74c3c;
-    text-align: center;
-    margin: 20px auto; /* вертикальний відступ і центрування */
+.stButton>button:hover {
+transform: translateY(-1px);
+box-shadow: 0 10px 25px rgba(0,0,0,0.2);
 }
 
-""", unsafe_allow_html=True)
 .stButton>button:hover {transform: translateY(-1px); box-shadow:0 10px 25px rgba(0,0,0,0.2);}
 </style>
 """, unsafe_allow_html=True)
